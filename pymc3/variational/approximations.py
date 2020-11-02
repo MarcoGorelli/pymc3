@@ -82,10 +82,7 @@ class MeanFieldGroup(Group):
             start_ = start.copy()
             update_start_vals(start_, self.model.test_point, self.model)
             start = start_
-        if self.batched:
-            start = start[self.group[0].name][0]
-        else:
-            start = self.bij.map(start)
+        start = start[self.group[0].name][0] if self.batched else self.bij.map(start)
         rho = np.zeros((self.ddim,))
         if self.batched:
             start = np.tile(start, (self.bdim, 1))
@@ -138,10 +135,7 @@ class FullRankGroup(Group):
             start_ = start.copy()
             update_start_vals(start_, self.model.test_point, self.model)
             start = start_
-        if self.batched:
-            start = start[self.group[0].name][0]
-        else:
-            start = self.bij.map(start)
+        start = start[self.group[0].name][0] if self.batched else self.bij.map(start)
         n = self.ddim
         L_tril = (
             np.eye(n)
@@ -274,9 +268,9 @@ class EmpiricalGroup(Group):
 
     def _check_trace(self):
         trace = self._kwargs.get('trace', None)
-        if (trace is not None
-            and not all([var.name in trace.varnames
-                         for var in self.group])):
+        if trace is not None and any(
+            var.name not in trace.varnames for var in self.group
+        ):
             raise ValueError('trace has not all FreeRV in the group')
 
     def randidx(self, size=None):
@@ -287,8 +281,6 @@ class EmpiricalGroup(Group):
                 size = size[None]
             elif size.ndim > 1:
                 raise ValueError('size ndim should be no more than 1d')
-            else:
-                pass
         else:
             size = tuple(np.atleast_1d(size))
         return (self._rng
@@ -469,7 +461,7 @@ class NormalizingFlowGroup(Group):
     def shared_params(self):
         if self.user_params is not None:
             return None
-        params = dict()
+        params = {}
         current = self.flow
         i = 0
         params[i] = current.shared_params

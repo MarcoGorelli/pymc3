@@ -101,10 +101,12 @@ def load_trace(directory: str, model=None) -> MultiTrace:
         'Instead, use `arviz.from_netcdf` to load traces.',
         DeprecationWarning,
     )
-    straces = []
-    for subdir in glob.glob(os.path.join(directory, '*')):
-        if os.path.isdir(subdir):
-            straces.append(SerializeNDArray(subdir).load(model))
+    straces = [
+        SerializeNDArray(subdir).load(model)
+        for subdir in glob.glob(os.path.join(directory, '*'))
+        if os.path.isdir(subdir)
+    ]
+
     if not straces:
         raise TraceDirectoryError("%s is not a PyMC3 saved chain directory." % directory)
     return base.MultiTrace(straces)
@@ -141,14 +143,13 @@ class SerializeNDArray:
                 sampler_vars.append({key: str(value.dtype) for key, value in stat.items()})
 
 
-        metadata = {
+        return {
             'draw_idx': ndarray.draw_idx,
             'draws': ndarray.draws,
             '_stats': stats,
             'chain': ndarray.chain,
             'sampler_vars': sampler_vars
         }
-        return metadata
 
     def save(self, ndarray):
         """Serialize a ndarray to file
@@ -375,13 +376,11 @@ def _slice_as_ndarray(strace, idx):
         start, stop, step = idx.indices(len(strace))
         sliced.samples = {v: strace.get_values(v, burn=idx.start, thin=idx.step)
                           for v in strace.varnames}
-        sliced.draw_idx = (stop - start) // step
     else:
         start, stop, step = idx.indices(len(strace))
         sliced.samples = {v: strace.get_values(v)[start:stop:step]
                           for v in strace.varnames}
-        sliced.draw_idx = (stop - start) // step
-
+    sliced.draw_idx = (stop - start) // step
     return sliced
 
 

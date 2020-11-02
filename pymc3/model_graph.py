@@ -36,12 +36,12 @@ class ModelGraph:
 
     def get_deterministics(self, var):
         """Compute the deterministic nodes of the graph, **not** including var itself."""
-        deterministics = []
         attrs = ('transformed', 'logpt')
-        for v in self.var_list:
-            if v != var and all(not hasattr(v, attr) for attr in attrs):
-                deterministics.append(v)
-        return deterministics
+        return [
+            v
+            for v in self.var_list
+            if v != var and all(not hasattr(v, attr) for attr in attrs)
+        ]
 
     def _get_ancestors(self, var: Tensor, func) -> Set[Tensor]:
         """Get all ancestors of a function, doing some accounting for deterministics.

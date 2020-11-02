@@ -210,7 +210,7 @@ class ObjectiveFunction:
         :class:`ObjectiveUpdates`
         """
         if more_updates is None:
-            more_updates = dict()
+            more_updates = {}
         resulting_updates = ObjectiveUpdates()
         if self.test_params:
             self.add_test_updates(
@@ -243,7 +243,7 @@ class ObjectiveFunction:
         if more_tf_params is None:
             more_tf_params = []
         if more_replacements is None:
-            more_replacements = dict()
+            more_replacements = {}
         tf_target = self(tf_n_mc, more_tf_params=more_tf_params, more_replacements=more_replacements)
         grads = pm.updates.get_or_compute_grads(tf_target, self.obj_params + more_tf_params)
         if total_grad_norm_constraint is not None:
@@ -260,7 +260,7 @@ class ObjectiveFunction:
         if more_obj_params is None:
             more_obj_params = []
         if more_replacements is None:
-            more_replacements = dict()
+            more_replacements = {}
         obj_target = self(obj_n_mc, more_obj_params=more_obj_params, more_replacements=more_replacements)
         grads = pm.updates.get_or_compute_grads(obj_target, self.obj_params + more_obj_params)
         if total_grad_norm_constraint is not None:
@@ -364,10 +364,7 @@ class ObjectiveFunction:
 
     @change_flags(compute_test_value='off')
     def __call__(self, nmc, **kwargs):
-        if 'more_tf_params' in kwargs:
-            m = -1.
-        else:
-            m = 1.
+        m = -1. if 'more_tf_params' in kwargs else 1.
         a = self.op.apply(self.tf)
         a = self.approx.set_size_and_deterministic(a, nmc, 0, kwargs.get('more_replacements'))
         return m * self.op.T(a)
@@ -445,8 +442,6 @@ class Operator:
                 warnings.warn(
                     'TestFunction for %s is redundant and removed' %
                     self, stacklevel=3)
-            else:
-                pass
             f = TestFunction()
         f.setup(self.approx)
         return self.objective_class(self, f)
@@ -469,10 +464,8 @@ def collect_shared_to_list(params):
     List
     """
     if isinstance(params, dict):
-        return list(
-            t[1] for t in sorted(params.items(), key=lambda t: t[0])
-            if isinstance(t[1], theano.compile.SharedVariable)
-        )
+        return [t[1] for t in sorted(params.items(), key=lambda t: t[0])
+                    if isinstance(t[1], theano.compile.SharedVariable)]
     elif params is None:
         return []
     else:
@@ -798,7 +791,7 @@ class Group(WithMemoization):
         if isinstance(vfam, str):
             vfam = vfam.lower()
         if options is None:
-            options = dict()
+            options = {}
         self.options = options
         self._vfam = vfam
         self._local = local
@@ -817,10 +810,10 @@ class Group(WithMemoization):
 
     @classmethod
     def get_param_spec_for(cls, **kwargs):
-        res = dict()
-        for name, fshape in cls.__param_spec__.items():
-            res[name] = tuple(eval(s, kwargs) for s in fshape)
-        return res
+        return {
+            name: tuple(eval(s, kwargs) for s in fshape)
+            for name, fshape in cls.__param_spec__.items()
+        }
 
     def _check_user_params(self, **kwargs):
         R"""*Dev* - checks user params, allocates them if they are correct, returns True.
@@ -846,7 +839,7 @@ class Group(WithMemoization):
                 'Passed parameters do not have a needed set of keys, '
                 'they should be equal, got {givens}, needed {needed}'.format(
                     givens=givens, needed=needed))
-        self._user_params = dict()
+        self._user_params = {}
         spec = self.get_param_spec_for(d=self.ddim, **kwargs.pop('spec_kw', {}))
         for name, param in self.user_params.items():
             shape = spec[name]
@@ -896,8 +889,8 @@ class Group(WithMemoization):
         if self.group is None:
             # delayed init
             self.group = group
-        if self.batched and len(group) > 1:
-            if self.local:  # better error message
+        if self.batched and len(group) > 1:  # better error message
+            if self.local:
                 raise LocalGroupError('Local groups with more than 1 variable are not supported')
             else:
                 raise BatchedGroupError('Batched groups with more than 1 variable are not supported')
@@ -910,7 +903,7 @@ class Group(WithMemoization):
         # I do some staff that is not supported by standard __init__
         # so I have to to it by myself
         self.ordering = ArrayOrdering([])
-        self.replacements = dict()
+        self.replacements = {}
         self.group = [get_transformed(var) for var in self.group]
         for var in self.group:
             if isinstance(var.distribution, pm.Discrete):
@@ -924,10 +917,7 @@ class Group(WithMemoization):
                     else:
                         raise BatchedGroupError('Batched variable should not be scalar')
                 self.ordering.size += (np.prod(var.dshape[1:])).astype(int)
-                if self.local:
-                    shape = (-1, ) + var.dshape[1:]
-                else:
-                    shape = var.dshape
+                shape = (-1, ) + var.dshape[1:] if self.local else var.dshape
             else:
                 self.ordering.size += var.dsize
                 shape = var.dshape
@@ -1051,12 +1041,11 @@ class Group(WithMemoization):
                 return getattr(self._rng, dist_name)(shape)
         else:
             sample = getattr(self._rng, dist_name)(shape)
-            initial = tt.switch(
+            return tt.switch(
                 deterministic,
                 tt.ones(shape, dtype) * dist_map,
                 sample
             )
-            return initial
 
     @node_property
     def symbolic_random(self):
@@ -1261,7 +1250,7 @@ class Approximation(WithMemoization):
         model = modelcontext(model)
         if not model.free_RVs:
             raise TypeError('Model does not have FreeRVs')
-        self.groups = list()
+        self.groups = []
         seen = set()
         rest = None
         for g in groups:
@@ -1636,11 +1625,11 @@ class Approximation(WithMemoization):
 
     @property
     def has_global(self):
-        return any(not c for c in self.collect('local'))
+        return not all(self.collect('local'))
 
     @property
     def has_batched(self):
-        return any(not c for c in self.collect('batched'))
+        return not all(self.collect('batched'))
 
     @node_property
     def symbolic_random(self):

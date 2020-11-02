@@ -68,12 +68,12 @@ class LinearComponent(Model):
                 axis=1
             )
             labels = ['Intercept'] + labels
-        coeffs = list()
+        coeffs = []
         for name in labels:
-            if name == 'Intercept':
-                if name in vars:
-                    v = Deterministic(name, vars[name])
-                else:
+            if name in vars:
+                v = Deterministic(name, vars[name])
+            else:
+                if name == 'Intercept':
                     v = self.Var(
                         name=name,
                         dist=priors.get(
@@ -81,10 +81,6 @@ class LinearComponent(Model):
                             self.default_intercept_prior
                         )
                     )
-                coeffs.append(v)
-            else:
-                if name in vars:
-                    v = Deterministic(name, vars[name])
                 else:
                     v = self.Var(
                         name=name,
@@ -96,7 +92,7 @@ class LinearComponent(Model):
                             )
                         )
                     )
-                coeffs.append(v)
+            coeffs.append(v)
         self.coeffs = tt.stack(coeffs, axis=0)
         self.y_est = x.dot(self.coeffs) + offset
 

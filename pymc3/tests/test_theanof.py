@@ -62,10 +62,7 @@ else:
             # numpy's choose cannot handle such a large axis so we
             # just use the implementation of take_along_axis. This is kind of
             # cheating because our implementation is the same as the one below
-            if axis < 0:
-                _axis = arr.ndim + axis
-            else:
-                _axis = axis
+            _axis = arr.ndim + axis if axis < 0 else axis
             if _axis < 0 or _axis >= arr.ndim:
                 raise ValueError(
                     "Supplied axis {} is out of bounds".format(axis)
@@ -97,8 +94,8 @@ class TestSetTheanoConfig:
 
 class TestTakeAlongAxis():
     def setup_class(self):
-        self.inputs_buffer = dict()
-        self.output_buffer = dict()
+        self.inputs_buffer = {}
+        self.output_buffer = {}
         self.func_buffer = dict()
 
     def _input_tensors(self, shape):
@@ -207,10 +204,7 @@ class TestTakeAlongAxis():
         ids=str,
     )
     def test_take_along_axis_grad(self, shape, axis, samples):
-        if axis < 0:
-            _axis = len(shape) + axis
-        else:
-            _axis = axis
+        _axis = len(shape) + axis if axis < 0 else axis
         # Setup the theano function
         t_arr, t_indices = self.get_input_tensors(shape)
         t_out2 = theano.grad(

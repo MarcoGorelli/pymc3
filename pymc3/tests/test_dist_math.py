@@ -93,11 +93,13 @@ class MultinomialA(Discrete):
         n = self.n
         p = self.p
 
-        return bound(factln(n) - factln(value).sum() + (value * tt.log(p)).sum(),
-                     value >= 0,
-                     0 <= p, p <= 1,
-                     tt.isclose(p.sum(), 1),
-                     broadcast_conditions=False
+        return bound(
+            factln(n) - factln(value).sum() + (value * tt.log(p)).sum(),
+            value >= 0,
+            p >= 0,
+            p <= 1,
+            tt.isclose(p.sum(), 1),
+            broadcast_conditions=False,
         )
 
 
@@ -112,11 +114,13 @@ class MultinomialB(Discrete):
         n = self.n
         p = self.p
 
-        return bound(factln(n) - factln(value).sum() + (value * tt.log(p)).sum(),
-                     tt.all(value >= 0),
-                     tt.all(0 <= p), tt.all(p <= 1),
-                     tt.isclose(p.sum(), 1),
-                     broadcast_conditions=False
+        return bound(
+            factln(n) - factln(value).sum() + (value * tt.log(p)).sum(),
+            tt.all(value >= 0),
+            tt.all(p >= 0),
+            tt.all(p <= 1),
+            tt.isclose(p.sum(), 1),
+            broadcast_conditions=False,
         )
 
 

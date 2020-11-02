@@ -36,14 +36,14 @@ def test_accuracy_non_normal():
 
 def test_find_MAP_discrete():
     tol = 2.0**-11
-    alpha = 4
-    beta = 4
-    n = 20
-    yes = 15
-
     with Model() as model:
+        alpha = 4
+        beta = 4
         p = Beta('p', alpha, beta)
+        n = 20
         Binomial('ss', n=n, p=p)
+        yes = 15
+
         Binomial('s', n=n, p=p, observed=yes)
 
         map_est1 = starting.find_MAP()

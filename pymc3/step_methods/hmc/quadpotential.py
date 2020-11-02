@@ -66,10 +66,7 @@ def quad_potential(C, is_cov):
 
 def partial_check_positive_definite(C):
     """Make a simple but partial check for Positive Definiteness."""
-    if C.ndim == 1:
-        d = C
-    else:
-        d = np.diag(C)
+    d = C if C.ndim == 1 else np.diag(C)
     i, = np.nonzero(np.logical_or(np.isnan(d), d <= 0))
 
     if len(i):

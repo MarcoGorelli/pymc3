@@ -152,16 +152,8 @@ class AR(distribution.Continuous):
             except AttributeError:
                 shape_ = rho.shape
 
-            if hasattr(shape_, "size") and shape_.size == 0:
-                p = 1
-            else:
-                p = shape_[0]
-
-        if constant:
-            self.p = p - 1
-        else:
-            self.p = p
-
+            p = 1 if hasattr(shape_, "size") and shape_.size == 0 else shape_[0]
+        self.p = p - 1 if constant else p
         self.constant = constant
         self.rho = rho = tt.as_tensor_variable(rho)
         self.init = init

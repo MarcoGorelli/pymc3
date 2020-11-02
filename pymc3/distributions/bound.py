@@ -72,7 +72,7 @@ class _Bounded(Distribution):
             bounds.append(value >= self.lower)
         if self.upper is not None:
             bounds.append(value <= self.upper)
-        if len(bounds) > 0:
+        if bounds:
             return bound(logp, *bounds)
         else:
             return logp

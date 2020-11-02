@@ -94,7 +94,7 @@ def shapes_broadcasting(*args, raise_exception=False):
         y = list(_check_shape_type(arg))
         if len(x) < len(y):
             x, y = y, x
-        if len(y) > 0:
+        if y:
             x[-len(y) :] = [
                 j if i == 1 else i if j == 1 else i if i == j else 0
                 for i, j in zip(x[-len(y) :], y)

@@ -261,7 +261,26 @@ class MvNormal(_QuadFormBase):
                 except TypeError:
                     size = (size,)
 
-        if self._cov_type == 'cov':
+        if self._cov_type == 'chol':
+            mu, chol = draw_values([self.mu, self.chol_cov],
+                                   point=point, size=size)
+            if size and mu.ndim == len(size) and mu.shape == size:
+                mu = mu[..., np.newaxis]
+            if mu.shape[-1] not in [chol.shape[-1], 1]:
+                raise ValueError("Shapes for mu and chol don't match")
+            broadcast_shape = (
+                np.broadcast(np.empty(mu.shape[:-1]),
+                             np.empty(chol.shape[:-2])).shape
+            )
+
+            mu = np.broadcast_to(mu, broadcast_shape + (chol.shape[-1],))
+            chol = np.broadcast_to(chol, broadcast_shape + chol.shape[-2:])
+            # If mu and chol were fixed by the point, only the standard normal
+            # should change
+            std_norm_shape = size + mu.shape if mu.shape[:len(size)] != size else mu.shape
+            standard_normal = np.random.standard_normal(std_norm_shape)
+            return mu + np.einsum('...ij,...j->...i', chol, standard_normal)
+        elif self._cov_type == 'cov':
             mu, cov = draw_values([self.mu, self.cov], point=point, size=size)
             if mu.shape[-1] != cov.shape[-1]:
                 raise ValueError("Shapes for mu and cov don't match")
@@ -273,28 +292,6 @@ class MvNormal(_QuadFormBase):
                 size += (mu.shape[-1],)
                 return np.nan * np.zeros(size)
             return dist.rvs(size)
-        elif self._cov_type == 'chol':
-            mu, chol = draw_values([self.mu, self.chol_cov],
-                                   point=point, size=size)
-            if size and mu.ndim == len(size) and mu.shape == size:
-                mu = mu[..., np.newaxis]
-            if mu.shape[-1] != chol.shape[-1] and mu.shape[-1] != 1:
-                raise ValueError("Shapes for mu and chol don't match")
-            broadcast_shape = (
-                np.broadcast(np.empty(mu.shape[:-1]),
-                             np.empty(chol.shape[:-2])).shape
-            )
-
-            mu = np.broadcast_to(mu, broadcast_shape + (chol.shape[-1],))
-            chol = np.broadcast_to(chol, broadcast_shape + chol.shape[-2:])
-            # If mu and chol were fixed by the point, only the standard normal
-            # should change
-            if mu.shape[:len(size)] != size:
-                std_norm_shape = size + mu.shape
-            else:
-                std_norm_shape = mu.shape
-            standard_normal = np.random.standard_normal(std_norm_shape)
-            return mu + np.einsum('...ij,...j->...i', chol, standard_normal)
         else:
             mu, tau = draw_values([self.mu, self.tau], point=point, size=size)
             if mu.shape[-1] != tau[0].shape[-1]:
@@ -515,10 +512,7 @@ class Dirichlet(Continuous):
     def _random(self, a, size=None):
         gen = stats.dirichlet.rvs
         shape = tuple(np.atleast_1d(self.shape))
-        if size[-len(shape):] == shape:
-            real_size = size[:-len(shape)]
-        else:
-            real_size = size
+        real_size = size[:-len(shape)] if size[-len(shape):] == shape else size
         if self.size_prefix:
             if real_size and real_size[0] == 1:
                 real_size = real_size[1:] + self.size_prefix
@@ -551,11 +545,10 @@ class Dirichlet(Continuous):
         array
         """
         a = draw_values([self.a], point=point, size=size)[0]
-        samples = generate_samples(self._random,
+        return generate_samples(self._random,
                                    a=a,
                                    dist_shape=self.shape,
                                    size=size)
-        return samples
 
     def logp(self, value):
         """
@@ -627,10 +620,7 @@ class Multinomial(Discrete):
         p = p / tt.sum(p, axis=-1, keepdims=True)
         n = np.squeeze(n) # works also if n is a tensor
 
-        if len(self.shape) > 1:
-            self.n = tt.shape_padright(n)
-            self.p = p if p.ndim > 1 else tt.shape_padleft(p)
-        elif n.ndim == 1:
+        if len(self.shape) > 1 or n.ndim == 1:
             self.n = tt.shape_padright(n)
             self.p = p if p.ndim > 1 else tt.shape_padleft(p)
         else:
@@ -702,11 +692,10 @@ class Multinomial(Discrete):
         array
         """
         n, p = draw_values([self.n, self.p], point=point, size=size)
-        samples = generate_samples(self._random, n, p,
+        return generate_samples(self._random, n, p,
                                    dist_shape=self.shape,
                                    not_broadcast_kwargs={'raw_size': size},
                                    size=size)
-        return samples
 
     def logp(self, x):
         """
@@ -1172,10 +1161,7 @@ class _LKJCholeskyCov(Continuous):
                 size = size[:len(size) - len(broadcast_shape)]
         # We will always provide _random with an integer size and then reshape
         # the output to get the correct size
-        if size is not None:
-            _size = np.prod(size)
-        else:
-            _size = 1
+        _size = np.prod(size) if size is not None else 1
         samples = self._random(n, eta, size=_size)
         if size is None:
             samples = samples[0]
@@ -1451,9 +1437,8 @@ class LKJCorr(Continuous):
         """
         n, eta = draw_values([self.n, self.eta], point=point, size=size)
         size= 1 if size is None else size
-        samples = generate_samples(self._random, n, eta,
+        return generate_samples(self._random, n, eta,
                                    broadcast_shape=(size,))
-        return samples
 
     def logp(self, x):
         """
@@ -1606,13 +1591,6 @@ class MatrixNormal(Continuous):
             self.rowcov = rowcov
         elif rowtau is not None:
             raise ValueError('rowtau not supported at this time')
-            self.m = rowtau.shape[0]
-            self._rowcov_type = 'tau'
-            rowtau = tt.as_tensor_variable(rowtau)
-            if rowtau.ndim != 2:
-                raise ValueError('rowtau must be two dimensional.')
-            self.rowchol_tau = cholesky(rowtau)
-            self.rowtau = rowtau
         else:
             self.m = rowchol.shape[0]
             self._rowcov_type = 'chol'
@@ -1635,13 +1613,6 @@ class MatrixNormal(Continuous):
             self.colcov = colcov
         elif coltau is not None:
             raise ValueError('coltau not supported at this time')
-            self.n = coltau.shape[0]
-            self._colcov_type = 'tau'
-            coltau = tt.as_tensor_variable(coltau)
-            if coltau.ndim != 2:
-                raise ValueError('coltau must be two dimensional.')
-            self.colchol_tau = cholesky(coltau)
-            self.coltau = coltau
         else:
             self.n = colchol.shape[0]
             self._colcov_type = 'chol'
@@ -1883,34 +1854,34 @@ class KroneckerNormal(Continuous):
         self.N = self.eigs.shape[0]
 
     def _setup_random(self):
-        if not hasattr(self, 'mv_params'):
-            self.mv_params = {'mu': self.mu}
-            if self._cov_type == 'cov':
-                cov = kronecker(*self.covs)
-                if self.is_noisy:
-                    cov = cov + self.sigma**2 * tt.identity_like(cov)
-                self.mv_params['cov'] = cov
-            elif self._cov_type == 'chol':
-                if self.is_noisy:
-                    covs = []
-                    for eig, Q in zip(self.eigs_sep, self.Qs):
-                        cov_i = tt.dot(Q, tt.dot(tt.diag(eig), Q.T))
-                        covs.append(cov_i)
-                    cov = kronecker(*covs)
-                    if self.is_noisy:
-                        cov = cov + self.sigma**2 * tt.identity_like(cov)
-                    self.mv_params['chol'] = self.cholesky(cov)
-                else:
-                    self.mv_params['chol'] = kronecker(*self.chols)
-            elif self._cov_type == 'evd':
+        if hasattr(self, 'mv_params'):
+            return
+        self.mv_params = {'mu': self.mu}
+        if self._cov_type == 'cov':
+            cov = kronecker(*self.covs)
+            if self.is_noisy:
+                cov = cov + self.sigma**2 * tt.identity_like(cov)
+            self.mv_params['cov'] = cov
+        elif self._cov_type == 'chol':
+            if self.is_noisy:
                 covs = []
                 for eig, Q in zip(self.eigs_sep, self.Qs):
                     cov_i = tt.dot(Q, tt.dot(tt.diag(eig), Q.T))
                     covs.append(cov_i)
                 cov = kronecker(*covs)
-                if self.is_noisy:
-                    cov = cov + self.sigma**2 * tt.identity_like(cov)
-                self.mv_params['cov'] = cov
+                cov = cov + self.sigma**2 * tt.identity_like(cov)
+                self.mv_params['chol'] = self.cholesky(cov)
+            else:
+                self.mv_params['chol'] = kronecker(*self.chols)
+        elif self._cov_type == 'evd':
+            covs = []
+            for eig, Q in zip(self.eigs_sep, self.Qs):
+                cov_i = tt.dot(Q, tt.dot(tt.diag(eig), Q.T))
+                covs.append(cov_i)
+            cov = kronecker(*covs)
+            if self.is_noisy:
+                cov = cov + self.sigma**2 * tt.identity_like(cov)
+            self.mv_params['cov'] = cov
 
     def random(self, point=None, size=None):
         """

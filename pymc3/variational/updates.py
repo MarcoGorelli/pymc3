@@ -166,7 +166,7 @@ def get_or_compute_grads(loss_or_grads, params):
                          "contains arbitrary parameter expressions, then "
                          "lasagne.utils.collect_shared_vars() may help you.")
     if isinstance(loss_or_grads, list):
-        if not len(loss_or_grads) == len(params):
+        if len(loss_or_grads) != len(params):
             raise ValueError("Got %d gradient expressions for %d parameters" %
                              (len(loss_or_grads), len(params)))
         return loss_or_grads
@@ -1035,10 +1035,7 @@ def norm_constraint(tensor_var, max_norm, norm_axes=None, epsilon=1e-7):
     dtype = np.dtype(theano.config.floatX).type
     norms = tt.sqrt(tt.sum(tt.sqr(tensor_var), axis=sum_over, keepdims=True))
     target_norms = tt.clip(norms, 0, dtype(max_norm))
-    constrained_output = \
-        (tensor_var * (target_norms / (dtype(epsilon) + norms)))
-
-    return constrained_output
+    return (tensor_var * (target_norms / (dtype(epsilon) + norms)))
 
 
 def total_norm_constraint(tensor_vars, max_norm, epsilon=1e-7,

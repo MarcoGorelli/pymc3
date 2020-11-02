@@ -148,13 +148,8 @@ class Covariance:
 
 class Combination(Covariance):
     def __init__(self, factor_list):
-        input_dim = max(
-            [
-                factor.input_dim
-                for factor in factor_list
-                if isinstance(factor, Covariance)
-            ]
-        )
+        input_dim = max(factor.input_dim for factor in factor_list
+                    if isinstance(factor, Covariance))
         super().__init__(input_dim=input_dim)
         self.factor_list = []
         for factor in factor_list:
@@ -239,10 +234,7 @@ class Kron(Covariance):
     def _split(self, X, Xs):
         indices = np.cumsum(self.input_dims)
         X_split = np.hsplit(X, indices)
-        if Xs is not None:
-            Xs_split = np.hsplit(Xs, indices)
-        else:
-            Xs_split = [None] * len(X_split)
+        Xs_split = np.hsplit(Xs, indices) if Xs is not None else [None] * len(X_split)
         return X_split, Xs_split
 
     def __call__(self, X, Xs=None, diag=False):
@@ -603,16 +595,15 @@ class Gibbs(Covariance):
 
     def __init__(self, input_dim, lengthscale_func, args=None, active_dims=None):
         super().__init__(input_dim, active_dims)
-        if active_dims is not None:
-            if len(active_dims) > 1:
-                raise NotImplementedError(
-                    ("Higher dimensional inputs ", "are untested")
-                )
-        else:
-            if input_dim != 1:
-                raise NotImplementedError(
-                    ("Higher dimensional inputs ", "are untested")
-                )
+        if (
+            active_dims is not None
+            and len(active_dims) > 1
+            or active_dims is None
+            and input_dim != 1
+        ):
+            raise NotImplementedError(
+                ("Higher dimensional inputs ", "are untested")
+            )
         if not callable(lengthscale_func):
             raise TypeError("lengthscale_func must be callable")
         self.lfunc = handle_args(lengthscale_func, args)
@@ -751,10 +742,7 @@ class Coregion(Covariance):
     def full(self, X, Xs=None):
         X, Xs = self._slice(X, Xs)
         index = tt.cast(X, "int32")
-        if Xs is None:
-            index2 = index.T
-        else:
-            index2 = tt.cast(Xs, "int32").T
+        index2 = index.T if Xs is None else tt.cast(Xs, "int32").T
         return self.B[index, index2]
 
     def diag(self, X):

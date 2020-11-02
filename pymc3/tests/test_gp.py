@@ -78,8 +78,8 @@ class TestAddProdMean:
     def test_add_multid(self):
         X = np.linspace(0, 1, 30).reshape(10, 3)
         A = np.array([1, 2, 3])
-        b = 10
         with pm.Model() as model:
+            b = 10
             mean1 = pm.gp.mean.Linear(coeffs=A, intercept=b)
             mean2 = pm.gp.mean.Constant(2)
             mean = mean1 + mean2 + mean2
@@ -89,8 +89,8 @@ class TestAddProdMean:
     def test_prod_multid(self):
         X = np.linspace(0, 1, 30).reshape(10, 3)
         A = np.array([1, 2, 3])
-        b = 10
         with pm.Model() as model:
+            b = 10
             mean1 = pm.gp.mean.Linear(coeffs=A, intercept=b)
             mean2 = pm.gp.mean.Constant(2)
             mean = mean1 * mean2 * mean2
@@ -377,8 +377,8 @@ class TestCovSliceDim:
         npt.assert_allclose(np.diag(K), Kd, atol=1e-5)
 
     def test_raises(self):
-        lengthscales = 2.0
         with pytest.raises(ValueError):
+            lengthscales = 2.0
             pm.gp.cov.ExpQuad(1, lengthscales, [True, False])
             pm.gp.cov.ExpQuad(2, lengthscales, [True])
 
@@ -701,18 +701,18 @@ class TestCoregion:
         self.Xs = np.concatenate((self.rand_cols, np.random.rand(10, 1)), axis=1)
 
     def test_full(self):
-        B_mat = self.B[self.rand_rows, self.rand_rows.T]
         with pm.Model() as model:
             B = pm.gp.cov.Coregion(2, W=self.W, kappa=self.kappa, active_dims=[0])
             npt.assert_allclose(
                 B(np.array([[2, 1.5], [3, -42]])).eval(),
                 self.B[2:4, 2:4]
                 )
+            B_mat = self.B[self.rand_rows, self.rand_rows.T]
             npt.assert_allclose(B(self.X).eval(), B_mat)
 
     def test_fullB(self):
-        B_mat = self.B[self.rand_rows, self.rand_rows.T]
         with pm.Model() as model:
+            B_mat = self.B[self.rand_rows, self.rand_rows.T]
             B = pm.gp.cov.Coregion(1, B=self.B)
             npt.assert_allclose(
                 B(np.array([[2], [3]])).eval(),
@@ -721,13 +721,13 @@ class TestCoregion:
             npt.assert_allclose(B(self.X).eval(), B_mat)
 
     def test_Xs(self):
-        B_mat = self.B[self.rand_rows, self.rand_cols.T]
         with pm.Model() as model:
             B = pm.gp.cov.Coregion(2, W=self.W, kappa=self.kappa, active_dims=[0])
             npt.assert_allclose(
                 B(np.array([[2, 1.5]]), np.array([[3, -42]])).eval(),
                 self.B[2, 3]
                 )
+            B_mat = self.B[self.rand_rows, self.rand_cols.T]
             npt.assert_allclose(B(self.X, self.Xs).eval(), B_mat)
 
     def test_diag(self):
@@ -1159,7 +1159,6 @@ class TestUtil:
             samples=np.random.normal(np.arange(X), size=(S, X))
         )
         plt.close()
-        pass
 
     def test_plot_gp_dist_warn_nan(self):
         """Test that the plotting helper works with the stated input shapes."""
@@ -1176,4 +1175,3 @@ class TestUtil:
                 samples=samples
             )
         plt.close()
-        pass

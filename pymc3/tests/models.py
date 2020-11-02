@@ -73,12 +73,12 @@ def simple_init():
 
 
 def simple_2model():
-    mu = -2.1
-    tau = 1.3
-    p = .4
     with Model() as model:
+        mu = -2.1
+        tau = 1.3
         x = pm.Normal('x', mu, tau=tau, testval=.1)
         pm.Deterministic('logx', tt.log(x))
+        p = .4
         pm.Bernoulli('y', p)
     return model.test_point, model
 
@@ -175,15 +175,15 @@ def beta_bernoulli(n=2):
 
 def simple_normal(bounded_prior=False):
     """Simple normal for testing MLE / MAP; probes issue #2482."""
-    x0 = 10.0
-    sd = 1.0
-    a, b = (9, 12)  # bounds for uniform RV, need non-symmetric to reproduce issue
-
     with pm.Model() as model:
         if bounded_prior:
+            a, b = (9, 12)  # bounds for uniform RV, need non-symmetric to reproduce issue
+
             mu_i = pm.Uniform("mu_i", a, b)
         else:
             mu_i = pm.Flat("mu_i")
+        x0 = 10.0
+        sd = 1.0
         pm.Normal("X_obs", mu=mu_i, sigma=sd, observed=x0)
 
     return model.test_point, model, None

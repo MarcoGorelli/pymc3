@@ -69,10 +69,10 @@ class ModelBackendSetupTestCase:
     def test_append(self):
         if self.sampler_vars is None:
             self.strace.setup(self.draws, self.chain)
-            assert len(self.strace) == 0
         else:
             self.strace.setup(self.draws, self.chain, self.sampler_vars)
-            assert len(self.strace) == 0
+
+        assert len(self.strace) == 0
 
     def test_double_close(self):
         self.strace.close()
@@ -197,10 +197,16 @@ class ModelBackendSampledTestCase:
             point1 = {varname: cls.expected[1][varname][idx, ...]
                       for varname in varnames}
             if cls.sampler_vars is not None:
-                stats1 = [dict((key, val[idx]) for key, val in stats.items())
-                          for stats in cls.expected_stats[0]]
-                stats2 = [dict((key, val[idx]) for key, val in stats.items())
-                          for stats in cls.expected_stats[1]]
+                stats1 = [
+                    {key: val[idx] for key, val in stats.items()}
+                    for stats in cls.expected_stats[0]
+                ]
+
+                stats2 = [
+                    {key: val[idx] for key, val in stats.items()}
+                    for stats in cls.expected_stats[1]
+                ]
+
                 strace0.record(point=point0, sampler_stats=stats1)
                 strace1.record(point=point1, sampler_stats=stats2)
             else:
@@ -247,8 +253,11 @@ class SamplingTestCase(ModelBackendSetupTestCase):
         point = {varname: np.tile(val, value.shape)
                  for varname, value in self.test_point.items()}
         if self.sampler_vars is not None:
-            stats = [dict((key, dtype(val)) for key, dtype in vars.items())
-                     for vars in self.sampler_vars]
+            stats = [
+                {key: dtype(val) for key, dtype in vars.items()}
+                for vars in self.sampler_vars
+            ]
+
             self.strace.record(point=point, sampler_stats=stats)
         else:
             self.strace.record(point=point)
@@ -339,10 +348,8 @@ class SelectionTestCase(ModelBackendSampledTestCase):
             npt.assert_equal(result[varname], expected)
 
     def test_get_slice(self):
-        expected = []
-        for chain in [0, 1]:
-            expected.append({varname: self.expected[chain][varname][2:]
-                             for varname in self.mtrace.varnames})
+        expected = [{varname: self.expected[chain][varname][2:]
+                             for varname in self.mtrace.varnames} for chain in [0, 1]]
         result = self.mtrace[2:]
         for chain in [0, 1]:
             for varname in self.test_point.keys():
@@ -369,10 +376,8 @@ class SelectionTestCase(ModelBackendSampledTestCase):
 
 
     def test_get_neg_slice(self):
-        expected = []
-        for chain in [0, 1]:
-            expected.append({varname: self.expected[chain][varname][-2:]
-                             for varname in self.mtrace.varnames})
+        expected = [{varname: self.expected[chain][varname][-2:]
+                             for varname in self.mtrace.varnames} for chain in [0, 1]]
         result = self.mtrace[-2:]
         for chain in [0, 1]:
             for varname in self.test_point.keys():

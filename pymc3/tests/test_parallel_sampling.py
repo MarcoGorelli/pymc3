@@ -135,5 +135,5 @@ def test_iterator():
     sampler = ps.ParallelSampler(10, 10, 3, 2, [2, 3, 4], [start] * 3,
                                  step, 0, False)
     with sampler:
-        for draw in sampler:
+        for _ in sampler:
             pass

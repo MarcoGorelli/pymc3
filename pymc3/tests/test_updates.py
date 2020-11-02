@@ -70,7 +70,7 @@ _n2 = _b + _n + _m2.sum()
 def test_updates_fast(opt, loss_and_params, kwargs, getter):
     with change_flags(compute_test_value='ignore'):
         loss, param = getter(loss_and_params)
-        args = dict()
+        args = {}
         args.update(**kwargs)
         args.update(dict(loss_or_grads=loss, params=param))
         if loss is None and param is None:

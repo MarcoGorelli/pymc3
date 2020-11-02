@@ -137,8 +137,8 @@ class SQLite(base.BaseTrace):
         self._closed = False
 
     def _create_table(self):
-        template = TEMPLATES['table']
         with self.db.con:
+            template = TEMPLATES['table']
             for varname, var_cols in self._var_cols.items():
                 if np.issubdtype(self.var_dtypes[varname], np.integer):
                     dtype = 'INT'
@@ -374,8 +374,7 @@ def _get_var_strs(cursor, varname):
 def _get_chain_list(cursor, varname):
     """Return a list of sorted chains for `varname`."""
     cursor.execute('SELECT DISTINCT chain FROM [{}]'.format(varname))
-    chains = sorted([chain[0] for chain in cursor.fetchall()])
-    return chains
+    return sorted([chain[0] for chain in cursor.fetchall()])
 
 
 def _rows_to_ndarray(cursor):

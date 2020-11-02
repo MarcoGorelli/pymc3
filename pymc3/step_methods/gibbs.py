@@ -45,11 +45,7 @@ class ElemwiseCategorical(ArrayStep):
         model = modelcontext(model)
         self.var = vars[0]
         self.sh = ones(self.var.dshape, self.var.dtype)
-        if values is None:
-            self.values = arange(self.var.distribution.k)
-        else:
-            self.values = values
-
+        self.values = arange(self.var.distribution.k) if values is None else values
         super().__init__(vars, [elemwise_logp(model, self.var)])
 
     def astep(self, q, logp):

@@ -71,9 +71,9 @@ class BoundedContinuous(Continuous):
         if transform == 'auto':
             if lower is None and upper is None:
                 transform = None
-            elif lower is not None and upper is None:
+            elif upper is None:
                 transform = transforms.lowerbound(lower)
-            elif lower is None and upper is not None:
+            elif lower is None:
                 transform = transforms.upperbound(upper)
             else:
                 transform = transforms.interval(lower, upper)
@@ -657,9 +657,9 @@ class TruncatedNormal(BoundedContinuous):
 
         if self.lower_check is None and self.upper_check is None:
             self._defaultval = mu
-        elif self.lower_check is None and self.upper_check is not None:
+        elif self.lower_check is None:
             self._defaultval = self.upper - 1.
-        elif self.lower_check is not None and self.upper_check is None:
+        elif self.upper_check is None:
             self._defaultval = self.lower + 1.
         else:
             self._defaultval = (self.lower + self.upper) / 2
@@ -2734,9 +2734,7 @@ class InverseGamma(PositiveContinuous):
     @staticmethod
     def _get_alpha_beta(alpha, beta, mu, sigma):
         if (alpha is not None):
-            if (beta is not None):
-                pass
-            else:
+            if beta is None:
                 beta = 1
         elif (mu is not None) and (sigma is not None):
             alpha = (2 * sigma**2 + mu**2)/sigma**2

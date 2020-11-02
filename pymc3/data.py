@@ -340,7 +340,7 @@ class Minibatch(tt.TensorVariable):
         elif isinstance(user_size, int):
             return slice(None, user_size)
         elif isinstance(user_size, (list, tuple)):
-            slc = list()
+            slc = []
             for i in user_size:
                 if isinstance(i, int):
                     slc.append(i)

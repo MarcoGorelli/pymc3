@@ -99,8 +99,7 @@ class Matcher:
 
 def select_by_precision(float64, float32):
     """Helper function to choose reasonable decimal cutoffs for different floatX modes."""
-    decimal = float64 if theano.config.floatX == "float64" else float32
-    return decimal
+    return float64 if theano.config.floatX == "float64" else float32
 
 
 @contextlib.contextmanager

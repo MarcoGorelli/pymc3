@@ -115,9 +115,11 @@ class Text(base.BaseTrace):
         point: dict
             Values mapped to variable names
         """
-        vals = {}
-        for varname, value in zip(self.varnames, self.fn(point)):
-            vals[varname] = value.ravel()
+        vals = {
+            varname: value.ravel()
+            for varname, value in zip(self.varnames, self.fn(point))
+        }
+
         columns = [str(val) for var in self.varnames for val in vals[var]]
         self._fh.write(','.join(columns) + '\n')
 
@@ -221,8 +223,7 @@ def _parse_chain_vars(filepath, model):
     chain_vars = [shape_pattern.split(v)[0] for v in header.split(",")]
     chain_vars = list(set(chain_vars))
     m = modelcontext(model)
-    model_vars_in_chain = [v for v in m.unobserved_RVs if v.name in chain_vars]
-    return model_vars_in_chain
+    return [v for v in m.unobserved_RVs if v.name in chain_vars]
 
 
 def dump(name, trace, chains=None):

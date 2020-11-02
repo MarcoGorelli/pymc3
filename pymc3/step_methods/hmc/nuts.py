@@ -383,7 +383,7 @@ class _Tree:
             p_sum = tree1.p_sum + tree2.p_sum
             turning = (p_sum.dot(left.v) <= 0) or (p_sum.dot(right.v) <= 0)
             # Additional U turn check only when depth > 1 to avoid redundant work.
-            if depth - 1 > 0:
+            if depth > 1:
                 p_sum1 = tree1.p_sum + tree2.left.p
                 turning1 = (p_sum1.dot(tree1.left.v) <= 0) or (
                     p_sum1.dot(tree2.left.v) <= 0

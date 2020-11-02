@@ -381,7 +381,7 @@ class MultiTrace:
         if not self._straces:
             return set()
         sampler_vars = [s.sampler_vars for s in self._straces.values()]
-        if not all(svars == sampler_vars[0] for svars in sampler_vars):
+        if any(svars != sampler_vars[0] for svars in sampler_vars):
             raise ValueError("Inividual chains contain different sampler stats")
         names = set()
         for trace in self._straces.values():
@@ -576,7 +576,7 @@ def merge_traces(mtraces: List[MultiTrace]) -> MultiTrace:
     -------
     A MultiTrace instance with merged chains
     """
-    if len(mtraces) == 0:
+    if not mtraces:
         raise ValueError("Cannot merge an empty set of traces.")
     base_mtrace = mtraces[0]
     chain_len = len(base_mtrace)

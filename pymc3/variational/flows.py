@@ -65,7 +65,7 @@ class Formula:
                 self.flows.extend([flow_for_short_name(tup[0])] * int(tup[1]))
             else:
                 raise ValueError('Wrong format: %s' % formula)
-        if len(self.flows) == 0:
+        if not self.flows:
             raise ValueError('No flows in formula')
 
     def __call__(self, z0=None, dim=None, jitter=.001, params=None, batch_size=None):
@@ -87,10 +87,9 @@ class Formula:
     __repr__ = _latex_repr_ = __latex__
 
     def get_param_spec_for(self, **kwargs):
-        res = dict()
-        for i, cls in enumerate(self.flows):
-            res[i] = cls.get_param_spec_for(**kwargs)
-        return res
+        return {
+            i: cls.get_param_spec_for(**kwargs) for i, cls in enumerate(self.flows)
+        }
 
 
 def seems_like_formula(formula):
@@ -261,10 +260,10 @@ class AbstractFlow(WithMemoization):
 
     @classmethod
     def get_param_spec_for(cls, **kwargs):
-        res = dict()
-        for name, fshape in cls.__param_spec__.items():
-            res[name] = tuple(eval(s, kwargs) for s in fshape)
-        return res
+        return {
+            name: tuple(eval(s, kwargs) for s in fshape)
+            for name, fshape in cls.__param_spec__.items()
+        }
 
     def __repr__(self):
         return 'Flow{%s}' % self.short_name
@@ -396,7 +395,6 @@ class PlanarFlow(LinearFlow):
                 u+(mwu-wu) *
                 w/((w**2).sum()+1e-10)
             )
-            return u_h, w
         else:
             # u_: bxd
             # w_: bxd
@@ -408,7 +406,8 @@ class PlanarFlow(LinearFlow):
                 + (mwu - wu)
                 * w / ((w ** 2).sum(-1, keepdims=True) + 1e-10)
             )
-            return u_h, w
+
+        return u_h, w
 
 
 class ReferencePointFlow(AbstractFlow):

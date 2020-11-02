@@ -127,10 +127,8 @@ def test_init_groups(three_var_model, raises, grouping):
         inited_groups = [a(group=g) for a, g in zip(approxes, groups)]
         approx = Approximation(inited_groups)
         for ig, g in zip(inited_groups, groups):
-            if g is None:
-                pass
-            else:
-                assert set(pm.util.get_transformed(z) for z in g) == set(ig.group)
+            if g is not None:
+                assert {pm.util.get_transformed(z) for z in g} == set(ig.group)
         else:
             assert approx.ndim == three_var_model.ndim
 
@@ -152,14 +150,15 @@ def three_var_groups(request, three_var_model):
     groups = [list(map(functools.partial(getattr, three_var_model), g))
               if g is not None else None
               for g in groups]
-    inited_groups = [a(group=g, model=three_var_model, **gk) for a, g, gk in zip(approxes, groups, gkwargs)]
-    return inited_groups
+    return [
+        a(group=g, model=three_var_model, **gk)
+        for a, g, gk in zip(approxes, groups, gkwargs)
+    ]
 
 
 @pytest.fixture
 def three_var_approx(three_var_model, three_var_groups):
-    approx = Approximation(three_var_groups, model=three_var_model)
-    return approx
+    return Approximation(three_var_groups, model=three_var_model)
 
 
 @pytest.fixture
@@ -215,7 +214,7 @@ def three_var_aevb_groups(parametric_grouped_approxes, three_var_model, aevb_ini
     params = dict()
     for k, v in spec.items():
         if isinstance(k, int):
-            params[k] = dict()
+            params[k] = {}
             for k_i, v_i in v.items():
                 params[k][k_i] = aevb_initial.dot(np.random.rand(7, *v_i).astype('float32'))
         else:
@@ -226,8 +225,7 @@ def three_var_aevb_groups(parametric_grouped_approxes, three_var_model, aevb_ini
 
 @pytest.fixture
 def three_var_aevb_approx(three_var_model, three_var_aevb_groups):
-    approx = Approximation(three_var_aevb_groups, model=three_var_model)
-    return approx
+    return Approximation(three_var_aevb_groups, model=three_var_model)
 
 
 def test_sample_aevb(three_var_aevb_approx, aevb_initial):
@@ -491,8 +489,6 @@ def test_elbo():
     range(2, 10, 3)
 )
 def test_scale_cost_to_minibatch_works(aux_total_size):
-    mu0 = 1.5
-    sigma = 1.0
     y_obs = np.array([1.6, 1.4])
     beta = len(y_obs)/float(aux_total_size)
     post_mu = np.array([1.88], dtype=theano.config.floatX)
@@ -503,6 +499,8 @@ def test_scale_cost_to_minibatch_works(aux_total_size):
     # did not not work as expected
     # there were some numeric problems, so float64 is forced
     with pm.theanof.change_flags(floatX='float64', warn_float64='ignore'):
+        mu0 = 1.5
+        sigma = 1.0
         with pm.Model():
             assert theano.config.floatX == 'float64'
             assert theano.config.warn_float64 == 'ignore'
@@ -540,13 +538,13 @@ def test_scale_cost_to_minibatch_works(aux_total_size):
     range(2, 10, 3)
 )
 def test_elbo_beta_kl(aux_total_size):
-    mu0 = 1.5
-    sigma = 1.0
     y_obs = np.array([1.6, 1.4])
     beta = len(y_obs)/float(aux_total_size)
     post_mu = np.array([1.88], dtype=theano.config.floatX)
     post_sigma = np.array([1], dtype=theano.config.floatX)
     with pm.theanof.change_flags(floatX='float64', warn_float64='ignore'):
+        mu0 = 1.5
+        sigma = 1.0
         with pm.Model():
             mu = pm.Normal('mu', mu=mu0, sigma=sigma)
             pm.Normal('y', mu=mu, sigma=1, observed=y_obs, total_size=aux_total_size)
@@ -763,12 +761,12 @@ def another_simple_model():
     ids=lambda d: d['name']
 )
 def fit_method_with_object(request, another_simple_model):
-    _select = dict(
-        advi=ADVI,
-        fullrank_advi=FullRankADVI,
-        svgd=SVGD
-    )
     with another_simple_model:
+        _select = dict(
+            advi=ADVI,
+            fullrank_advi=FullRankADVI,
+            svgd=SVGD
+        )
         return _select[request.param['name']](
             **request.param['kw'])
 
@@ -817,12 +815,12 @@ def aevb_model():
 
 
 def test_aevb(inference_spec, aevb_model):
-    # add to inference that supports aevb
-    x = aevb_model['x']
-    y = aevb_model['y']
     model = aevb_model['model']
-    replace = aevb_model['replace']
     with model:
+        # add to inference that supports aevb
+        x = aevb_model['x']
+        y = aevb_model['y']
+        replace = aevb_model['replace']
         try:
             inference = inference_spec(local_rv={x: {'mu': replace['mu']*5, 'rho': replace['rho']}})
             approx = inference.fit(3, obj_n_mc=2, more_obj_params=list(replace.values()))
@@ -836,9 +834,9 @@ def test_aevb(inference_spec, aevb_model):
 
 
 def test_rowwise_approx(three_var_model, parametric_grouped_approxes):
-    # add to inference that supports aevb
-    cls, kw = parametric_grouped_approxes
     with three_var_model:
+        # add to inference that supports aevb
+        cls, kw = parametric_grouped_approxes
         try:
             approx = Approximation([cls([three_var_model.one], rowwise=True, **kw), Group(None, vfam='mf')])
             inference = pm.KLqp(approx)
@@ -1025,9 +1023,11 @@ def test_flow_det(flow_spec):
 def test_flow_det_local(flow_spec):
     z0 = tt.arange(0, 12).astype('float32')
     spec = flow_spec.cls.get_param_spec_for(d=12)
-    params = dict()
-    for k, shp in spec.items():
-        params[k] = np.random.randn(1, *shp).astype('float32')
+    params = {
+        k: np.random.randn(1, *shp).astype('float32')
+        for k, shp in spec.items()
+    }
+
     flow = flow_spec(dim=12, z0=z0.reshape((1, 1, 12)), **params)
     assert flow.batched
     with change_flags(compute_test_value='off'):

@@ -115,11 +115,11 @@ class ExampleSuite:
         y_mean = y.value.mean()
         y_std = y.value.std() * 2
 
-        sigma_low = 1
-        sigma_high = 10
         with pm.Model():
             group1_mean = pm.Normal('group1_mean', y_mean, sd=y_std)
             group2_mean = pm.Normal('group2_mean', y_mean, sd=y_std)
+            sigma_low = 1
+            sigma_high = 10
             group1_std = pm.Uniform('group1_std', lower=sigma_low, upper=sigma_high)
             group2_std = pm.Uniform('group2_std', lower=sigma_low, upper=sigma_high)
             lambda_1 = group1_std**-2

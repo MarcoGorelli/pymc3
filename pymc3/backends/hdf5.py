@@ -18,10 +18,9 @@ from contextlib import contextmanager
 
 @contextmanager
 def activator(instance):
-    if isinstance(instance.hdf5_file, h5py.File):
-        if instance.hdf5_file.id:  # if file is open, keep open
-            yield
-            return
+    if isinstance(instance.hdf5_file, h5py.File) and instance.hdf5_file.id:  # if file is open, keep open
+        yield
+        return
     # if file is closed/not referenced: open, do job, then close
     instance.hdf5_file = h5py.File(instance.name, 'a')
     yield
@@ -117,9 +116,7 @@ class HDF5(base.BaseTrace):
         with self.activate_file:
             l = []
             for i, sampler in sorted(self.stats.items(), key=lambda x: int(x[0])):
-                d = {}
-                for varname, ds in sampler.items():
-                    d[varname] = ds.dtype
+                d = {varname: ds.dtype for varname, ds in sampler.items()}
                 l.append(d)
         if not l:
             return None
@@ -212,10 +209,7 @@ class HDF5(base.BaseTrace):
     def point(self, idx):
         with self.activate_file:
             idx = int(idx)
-            r = {}
-            for varname, values in self.samples.items():
-                r[varname] = values[idx]
-            return r
+            return {varname: values[idx] for varname, values in self.samples.items()}
 
     def __len__(self):
         if self.chain_is_setup:

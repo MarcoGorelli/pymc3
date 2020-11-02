@@ -643,7 +643,7 @@ class MarginalSparse(Marginal):
         # new_gp will default to FITC approx
         new_gp = super().__add__(other)
         # make sure new gp has correct approx
-        if not self.approx == other.approx:
+        if self.approx != other.approx:
             raise TypeError("Cannot add GPs with different approximations")
         new_gp.approx = self.approx
         return new_gp
@@ -880,8 +880,7 @@ class LatentKron(Base):
         chols = [cholesky(stabilize(cov(X))) for cov, X in zip(self.cov_funcs, Xs)]
         # remove reparameterization option
         v = pm.Normal(name + "_rotated_", mu=0.0, sigma=1.0, shape=self.N, **kwargs)
-        f = pm.Deterministic(name, mu + tt.flatten(kron_dot(chols, v)))
-        return f
+        return pm.Deterministic(name, mu + tt.flatten(kron_dot(chols, v)))
 
     def prior(self, name, Xs, **kwargs):
         """

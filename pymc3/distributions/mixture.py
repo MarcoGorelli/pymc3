@@ -249,9 +249,9 @@ class Mixture(Distribution):
             comp_shape = tuple(comp_dists.shape)
             ndim = value.ndim
             if (
-                val_shape is not None and
-                    not((self_shape is not None and val_shape == self_shape) or
-                        val_shape == comp_shape)
+                val_shape is not None
+                and (self_shape is None or val_shape != self_shape)
+                and val_shape != comp_shape
             ):
                 # value is neither the test point nor the self tensor, it
                 # is likely to hold observed values, so we must compute the

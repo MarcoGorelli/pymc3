@@ -207,11 +207,8 @@ class Discrete(Distribution):
     def __init__(self, shape=(), dtype=None, defaults=('mode',),
                  *args, **kwargs):
         if dtype is None:
-            if theano.config.floatX == 'float32':
-                dtype = 'int16'
-            else:
-                dtype = 'int64'
-        if dtype != 'int16' and dtype != 'int64':
+            dtype = 'int16' if theano.config.floatX == 'float32' else 'int64'
+        if dtype not in ['int16', 'int64']:
             raise TypeError('Discrete classes expect dtype to be int16 or int64.')
 
         if kwargs.get('transform', None) is not None:
@@ -434,72 +431,71 @@ class DensityDist(Distribution):
         self.__dict__ = vals
 
     def random(self, point=None, size=None, **kwargs):
-        if self.rand is not None:
-            not_broadcast_kwargs = dict(point=point)
-            not_broadcast_kwargs.update(**kwargs)
-            if self.wrap_random_with_dist_shape:
-                size = to_tuple(size)
-                with _DrawValuesContextBlocker():
-                    test_draw = generate_samples(
-                        self.rand,
-                        size=None,
-                        not_broadcast_kwargs=not_broadcast_kwargs,
-                    )
-                    test_shape = test_draw.shape
-                if self.shape[:len(size)] == size:
-                    dist_shape = size + self.shape
-                else:
-                    dist_shape = self.shape
-                broadcast_shape = broadcast_dist_samples_shape(
-                    [dist_shape, test_shape],
-                    size=size
-                )
-                broadcast_shape = broadcast_shape[
-                    :len(broadcast_shape) - len(test_shape)
-                ]
-                samples = generate_samples(
-                    self.rand,
-                    broadcast_shape=broadcast_shape,
-                    size=size,
-                    not_broadcast_kwargs=not_broadcast_kwargs,
-                )
-            else:
-                samples = self.rand(point=point, size=size, **kwargs)
-                if self.check_shape_in_random:
-                    expected_shape = (
-                        self.shape
-                        if size is None else
-                        to_tuple(size) + self.shape
-                    )
-                    if not expected_shape == samples.shape:
-                        raise RuntimeError(
-                            "DensityDist encountered a shape inconsistency "
-                            "while drawing samples using the supplied random "
-                            "function. Was expecting to get samples of shape "
-                            "{expected} but got {got} instead.\n"
-                            "Whenever possible wrap_random_with_dist_shape = True "
-                            "is recommended.\n"
-                            "Be aware that the random callable provided as the "
-                            "DensityDist random method cannot "
-                            "adapt to shape changes in the distribution's "
-                            "shape, which sometimes are necessary for sampling "
-                            "when the model uses pymc3.Data or theano shared "
-                            "tensors, or when the DensityDist has observed "
-                            "values.\n"
-                            "This check can be disabled by passing "
-                            "check_shape_in_random=False when the DensityDist "
-                            "is initialized.".
-                            format(
-                                expected=expected_shape,
-                                got=samples.shape,
-                            )
-                        )
-            return samples
-        else:
+        if self.rand is None:
             raise ValueError(
                 "Distribution was not passed any random method. "
                 "Define a custom random method and pass it as kwarg random"
             )
+        not_broadcast_kwargs = dict(point=point)
+        not_broadcast_kwargs.update(**kwargs)
+        if self.wrap_random_with_dist_shape:
+            size = to_tuple(size)
+            with _DrawValuesContextBlocker():
+                test_draw = generate_samples(
+                    self.rand,
+                    size=None,
+                    not_broadcast_kwargs=not_broadcast_kwargs,
+                )
+                test_shape = test_draw.shape
+            if self.shape[:len(size)] == size:
+                dist_shape = size + self.shape
+            else:
+                dist_shape = self.shape
+            broadcast_shape = broadcast_dist_samples_shape(
+                [dist_shape, test_shape],
+                size=size
+            )
+            broadcast_shape = broadcast_shape[
+                :len(broadcast_shape) - len(test_shape)
+            ]
+            samples = generate_samples(
+                self.rand,
+                broadcast_shape=broadcast_shape,
+                size=size,
+                not_broadcast_kwargs=not_broadcast_kwargs,
+            )
+        else:
+            samples = self.rand(point=point, size=size, **kwargs)
+            if self.check_shape_in_random:
+                expected_shape = (
+                    self.shape
+                    if size is None else
+                    to_tuple(size) + self.shape
+                )
+                if expected_shape != samples.shape:
+                    raise RuntimeError(
+                        "DensityDist encountered a shape inconsistency "
+                        "while drawing samples using the supplied random "
+                        "function. Was expecting to get samples of shape "
+                        "{expected} but got {got} instead.\n"
+                        "Whenever possible wrap_random_with_dist_shape = True "
+                        "is recommended.\n"
+                        "Be aware that the random callable provided as the "
+                        "DensityDist random method cannot "
+                        "adapt to shape changes in the distribution's "
+                        "shape, which sometimes are necessary for sampling "
+                        "when the model uses pymc3.Data or theano shared "
+                        "tensors, or when the DensityDist has observed "
+                        "values.\n"
+                        "This check can be disabled by passing "
+                        "check_shape_in_random=False when the DensityDist "
+                        "is initialized.".
+                        format(
+                            expected=expected_shape,
+                            got=samples.shape,
+                        )
+                    )
+        return samples
 
 
 class _DrawValuesContext(metaclass=ContextMeta, context_class='_DrawValuesContext'):
@@ -542,7 +538,7 @@ class _DrawValuesContextBlocker(_DrawValuesContext):
         return instance
 
     def __init__(self):
-        self.drawn_vars = dict()
+        self.drawn_vars = {}
 
 
 def is_fast_drawable(var):
@@ -680,7 +676,7 @@ def draw_values(params, point=None, size=None):
         # test_distributions_random::TestDrawValues::test_draw_order fails without it
         # The remaining params that must be drawn are all hashable
         to_eval = set()
-        missing_inputs = set([j for j, p in symbolic_params])
+        missing_inputs = {j for j, p in symbolic_params}
         while to_eval or missing_inputs:
             if to_eval == missing_inputs:
                 raise ValueError('Cannot resolve inputs for {}'.format([str(params[j]) for j in to_eval]))
@@ -887,8 +883,7 @@ def _draw_value(param, point=None, givens=None, size=None):
                 input_vars = []
                 input_vals = []
             func = _compile_theano_function(param, input_vars)
-            output = func(*input_vals)
-            return output
+            return func(*input_vals)
     raise ValueError('Unexpected type in draw_value: %s' % type(param))
 
 def _is_one_d(dist_shape):
@@ -938,7 +933,7 @@ def generate_samples(generator, *args, **kwargs):
     broadcast_shape = kwargs.pop('broadcast_shape', None)
     not_broadcast_kwargs = kwargs.pop('not_broadcast_kwargs', None)
     if not_broadcast_kwargs is None:
-        not_broadcast_kwargs = dict()
+        not_broadcast_kwargs = {}
 
     # Parse out raw input parameters for the generator
     args = tuple(p[0] if isinstance(p, tuple) else p for p in args)
@@ -1011,11 +1006,17 @@ def generate_samples(generator, *args, **kwargs):
     samples = np.asarray(samples)
 
     # reshape samples here
-    if samples.ndim > 0 and samples.shape[0] == 1 and size_tup == (1,):
-        if (len(samples.shape) > len(dist_shape) and
-            samples.shape[-len(dist_shape):] == dist_shape[-len(dist_shape):]
-        ):
-            samples = samples.reshape(samples.shape[1:])
+    if (
+        samples.ndim > 0
+        and samples.shape[0] == 1
+        and size_tup == (1,)
+        and (
+            len(samples.shape) > len(dist_shape)
+            and samples.shape[-len(dist_shape) :]
+            == dist_shape[-len(dist_shape) :]
+        )
+    ):
+        samples = samples.reshape(samples.shape[1:])
 
     if (one_d and samples.ndim > 0 and samples.shape[-1] == 1
         and (samples.shape != size_tup or

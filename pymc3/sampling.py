@@ -693,12 +693,12 @@ def _sample_many(
             **kwargs,
         )
         if trace is None:
-            if len(traces) == 0:
+            if not traces:
                 raise ValueError("Sampling stopped before a sample was created.")
             else:
                 break
         elif len(trace) < draws:
-            if len(traces) == 0:
+            if not traces:
                 traces.append(trace)
             break
         else:
@@ -1114,10 +1114,16 @@ class PopulationStepper:
             # the stepper is not necessarily a PopulationArraySharedStep itself,
             # but rather a CompoundStep. PopulationArrayStepShared.population
             # has to be updated, therefore we identify the substeppers first.
-            population_steppers = []
-            for sm in stepper.methods if isinstance(stepper, CompoundStep) else [stepper]:
-                if isinstance(sm, arraystep.PopulationArrayStepShared):
-                    population_steppers.append(sm)
+            population_steppers = [
+                sm
+                for sm in (
+                    stepper.methods
+                    if isinstance(stepper, CompoundStep)
+                    else [stepper]
+                )
+                if isinstance(sm, arraystep.PopulationArrayStepShared)
+            ]
+
             while True:
                 incoming = secondary_end.recv()
                 # receiving a None is the signal to exit
@@ -1800,7 +1806,7 @@ def sample_posterior_predictive_w(
         raise ValueError("The number of models and weights should be the same")
 
     length_morv = len(models[0].observed_RVs)
-    if not all(len(i.observed_RVs) == length_morv for i in models):
+    if any(len(i.observed_RVs) != length_morv for i in models):
         raise ValueError("The number of observed RVs should be the same for all models")
 
     weights = np.asarray(weights)
@@ -1833,7 +1839,7 @@ def sample_posterior_predictive_w(
     obs = [x for m in models for x in m.observed_RVs]
     variables = np.repeat(obs, n)
 
-    lengths = list(set([np.atleast_1d(observed).shape for observed in obs]))
+    lengths = list({np.atleast_1d(observed).shape for observed in obs})
 
     if len(lengths) == 1:
         size = [None for i in variables]
@@ -1916,11 +1922,9 @@ def sample_prior_predictive(
     elif vars is None:
         vars = var_names
         vars_ = vars
-    elif vars is not None:
+    else:
         warnings.warn("vars argument is deprecated in favor of var_names.", DeprecationWarning)
         vars_ = vars
-    else:
-        raise ValueError("Cannot supply both vars and var_names arguments.")
     vars = cast(TIterable[str], vars)  # tell mypy that vars cannot be None here.
 
     if random_seed is not None:

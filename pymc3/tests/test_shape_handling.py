@@ -99,10 +99,10 @@ def samples_to_broadcast_to(request, samples_to_broadcast):
 @pytest.fixture
 def fixture_model():
     with pm.Model() as model:
-        n = 5
-        dim = 4
         with pm.Model():
             cov = pm.InverseGamma("cov", alpha=1, beta=1)
+            n = 5
+            dim = 4
             x = pm.Normal(
                 "x", mu=np.ones((dim,)), sigma=pm.math.sqrt(cov), shape=(n, dim)
             )

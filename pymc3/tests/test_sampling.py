@@ -74,8 +74,8 @@ class TestSample(SeededTest):
         assert (draws[0] == draws[1]).all()
 
     def test_sample(self):
-        test_cores = [1]
         with self.model:
+            test_cores = [1]
             for cores in test_cores:
                 for steps in [1, 10, 300]:
                     pm.sample(
@@ -168,7 +168,6 @@ class TestSample(SeededTest):
             assert trace.report.n_tune == 50
             assert trace.report.n_draws == 100
             assert isinstance(trace.report.t_sampling, float)
-        pass
 
     def test_return_inferencedata(self):
         with self.model:
@@ -200,7 +199,6 @@ class TestSample(SeededTest):
             assert result.posterior.sizes["draw"] == 100
             assert result.posterior.sizes["chain"] == 2
             assert len(result._groups_warmup) == 0
-        pass
 
     @pytest.mark.parametrize('cores', [1, 2])
     def test_sampler_stat_tune(self, cores):
@@ -212,7 +210,6 @@ class TestSample(SeededTest):
             ).get_sampler_stats('tune', chains=1)
             assert list(tune_stat).count(True) == 5
             assert list(tune_stat).count(False) == 7
-        pass
 
     @pytest.mark.parametrize(
         "start, error",
@@ -234,10 +231,10 @@ class TestSample(SeededTest):
         pm.sampling._check_start_shape(self.model, start)
 
     def test_sample_callback(self):
-        callback = mock.Mock()
-        test_cores = [1, 2]
-        test_chains = [1, 2]
         with self.model:
+            callback = mock.Mock()
+            test_cores = [1, 2]
+            test_chains = [1, 2]
             for cores in test_cores:
                 for chain in test_chains:
                     pm.sample(

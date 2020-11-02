@@ -376,7 +376,7 @@ def test_multiple_observed_rv():
         x = pm.DensityDist(  # pylint: disable=unused-variable
             "x", pm.Normal.dist(mu, 1.0).logp, observed={"value": 0.1}
         )
-    assert not model['x'] == model['mu']
+    assert model['x'] != model['mu']
     assert model['x'] == model['x']
     assert  model['x'] in model.observed_RVs
-    assert not model['x'] in model.vars
+    assert model['x'] not in model.vars

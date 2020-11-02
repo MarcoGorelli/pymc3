@@ -126,7 +126,7 @@ class TestMultiTrace(bf.ModelBackendSetupTestCase):
         with self.model:
             strace0 = self.backend(self.name)
             strace0.setup(self.draws, 1)
-            for i in range(self.draws):
+            for _ in range(self.draws):
                 strace0.record(self.test_point)
             strace0.close()
         mtrace0 = base.MultiTrace([self.strace0])
@@ -134,7 +134,7 @@ class TestMultiTrace(bf.ModelBackendSetupTestCase):
         with self.model:
             strace1 = self.backend(self.name)
             strace1.setup(2 * self.draws, 1)
-            for i in range(2 * self.draws):
+            for _ in range(2 * self.draws):
                 strace1.record(self.test_point)
             strace1.close()
         mtrace1 = base.MultiTrace([strace1])
