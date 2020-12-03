@@ -277,8 +277,7 @@ class Interval(ElemwiseTransform):
 
     def backward(self, x):
         a, b = self.a, self.b
-        r = (b - a) * tt.nnet.sigmoid(x) + a
-        return r
+        return (b - a) * tt.nnet.sigmoid(x) + a
 
     def forward(self, x):
         a, b = self.a, self.b
@@ -309,8 +308,7 @@ class LowerBound(ElemwiseTransform):
 
     def backward(self, x):
         a = self.a
-        r = tt.exp(x) + a
-        return r
+        return tt.exp(x) + a
 
     def forward(self, x):
         a = self.a
@@ -344,8 +342,7 @@ class UpperBound(ElemwiseTransform):
 
     def backward(self, x):
         b = self.b
-        r = b - tt.exp(x)
-        return r
+        return b - tt.exp(x)
 
     def forward(self, x):
         b = self.b
@@ -557,8 +554,5 @@ class Chain(Transform):
         # match the shape of the smallest jacobian_det
         det = 0.0
         for det_ in det_list:
-            if det_.ndim > ndim0:
-                det += det_.sum(axis=-1)
-            else:
-                det += det_
+            det += det_.sum(axis=-1) if det_.ndim > ndim0 else det_
         return det

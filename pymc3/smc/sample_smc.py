@@ -193,9 +193,10 @@ def sample_smc(
         pool.close()
         pool.join()
     else:
-        results = []
-        for i in range(chains):
-            results.append(sample_smc_int(*params, random_seed[i], i, _log))
+        results = [
+            sample_smc_int(*params, random_seed[i], i, _log)
+            for i in range(chains)
+        ]
 
     (
         traces,

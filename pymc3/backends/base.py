@@ -223,13 +223,13 @@ class BaseTrace(ABC):
 
     @property
     def stat_names(self):
-        if self.supports_sampler_stats:
-            names = set()
-            for vars in self.sampler_vars or []:
-                names.update(vars.keys())
-            return names
-        else:
+        if not self.supports_sampler_stats:
             return set()
+
+        names = set()
+        for vars in self.sampler_vars or []:
+            names.update(vars.keys())
+        return names
 
 
 class MultiTrace:
@@ -379,7 +379,7 @@ class MultiTrace:
         if not self._straces:
             return set()
         sampler_vars = [s.sampler_vars for s in self._straces.values()]
-        if not all(svars == sampler_vars[0] for svars in sampler_vars):
+        if any(svars != sampler_vars[0] for svars in sampler_vars):
             raise ValueError("Inividual chains contain different sampler stats")
         names = set()
         for trace in self._straces.values():
@@ -410,12 +410,11 @@ class MultiTrace:
         for k, v in vals.items():
             new_var = 1
             if k in self.varnames:
-                if overwrite:
-                    self.varnames.remove(k)
-                    new_var = 0
-                else:
+                if not overwrite:
                     raise ValueError(f"Variable name {k} already exists.")
 
+                self.varnames.remove(k)
+                new_var = 0
             self.varnames.append(k)
 
             chains = self._straces
@@ -574,7 +573,7 @@ def merge_traces(mtraces: List[MultiTrace]) -> MultiTrace:
     -------
     A MultiTrace instance with merged chains
     """
-    if len(mtraces) == 0:
+    if not mtraces:
         raise ValueError("Cannot merge an empty set of traces.")
     base_mtrace = mtraces[0]
     chain_len = len(base_mtrace)

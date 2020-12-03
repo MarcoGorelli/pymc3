@@ -35,8 +35,7 @@ def test_gradients():
     # This is the new system, ODE + Sensitivities, which will be integrated
     def augmented_system(Y, t, p):
         dydt, ddt_dydp = augmented_ode_func(Y[:1], t, p, Y[1:])
-        derivatives = np.concatenate([dydt, ddt_dydp])
-        return derivatives
+        return np.concatenate([dydt, ddt_dydp])
 
     # Create real sensitivities
     y0 = 0.0

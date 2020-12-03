@@ -56,10 +56,7 @@ class HasName(Protocol):
     name: str
 
 
-if TYPE_CHECKING:
-    _TraceDictParent = UserDict[str, np.ndarray]
-else:
-    _TraceDictParent = UserDict
+_TraceDictParent = UserDict[str, np.ndarray] if TYPE_CHECKING else UserDict
 
 
 class _TraceDict(_TraceDictParent):
@@ -285,10 +282,7 @@ def fast_sample_posterior_predictive(
         class _ExtendableTrace(_ETPParent):
             def extend_trace(self, trace: Dict[str, np.ndarray]) -> None:
                 for k, v in trace.items():
-                    if k in self.data:
-                        self.data[k] = np.concatenate((self.data[k], v))
-                    else:
-                        self.data[k] = v
+                    self.data[k] = np.concatenate((self.data[k], v)) if k in self.data else v
 
         ppc_trace = _ExtendableTrace()
         for s in _samples:
@@ -519,16 +513,17 @@ class _PosteriorPredictiveSampler(AbstractContextManager):
                 self.leaf_nodes.update(nn)
                 # Update the discovered parental relationships
                 for k in nnp.keys():
-                    if k not in self.named_nodes_parents.keys():
-                        self.named_nodes_parents[k] = nnp[k]
-                    else:
+                    if k in self.named_nodes_parents:
                         self.named_nodes_parents[k].update(nnp[k])
+                    else:
+                        self.named_nodes_parents[k] = nnp[k]
                 # Update the discovered child relationships
                 for k in nnc.keys():
-                    if k not in self.named_nodes_children.keys():
-                        self.named_nodes_children[k] = nnc[k]
-                    else:
+                    if k in self.named_nodes_children:
                         self.named_nodes_children[k].update(nnc[k])
+
+                    else:
+                        self.named_nodes_children[k] = nnc[k]
 
     def draw_value(self, param, trace: Optional[_TraceDict] = None, givens=None):
         """Draw a set of random values from a distribution or return a constant.
@@ -686,10 +681,7 @@ class _PosteriorPredictiveSampler(AbstractContextManager):
 
 
 def _param_shape(var_desig, model: Model) -> Tuple[int, ...]:
-    if isinstance(var_desig, str):
-        v = model[var_desig]
-    else:
-        v = var_desig
+    v = model[var_desig] if isinstance(var_desig, str) else var_desig
     if hasattr(v, "observations"):
         try:
             # To get shape of _observed_ data container `pm.Data`

@@ -42,8 +42,7 @@ def fixed_hessian(point, vars=None, model=None):
     point = Point(point, model=model)
 
     bij = DictToArrayBijection(ArrayOrdering(vars), point)
-    rval = np.ones(bij.map(point).size) / 10
-    return rval
+    return np.ones(bij.map(point).size) / 10
 
 
 def find_hessian(point, vars=None, model=None):
@@ -90,10 +89,9 @@ def guess_scaling(point, vars=None, model=None, scaling_bound=1e-8):
 def adjust_scaling(s, scaling_bound):
     if s.ndim < 2:
         return adjust_precision(s, scaling_bound)
-    else:
-        val, vec = np.linalg.eigh(s)
-        val = adjust_precision(val, scaling_bound)
-        return eig_recompose(val, vec)
+    val, vec = np.linalg.eigh(s)
+    val = adjust_precision(val, scaling_bound)
+    return eig_recompose(val, vec)
 
 
 def adjust_precision(tau, scaling_bound=1e-8):

@@ -86,11 +86,7 @@ class PGBART(ArrayStepShared):
         # For the tunning phase we restrict max_stages to a low number, otherwise it is almost sure
         # we will reach max_stages given that our first set of m trees is not good at all.
         # Can set max_stages as a function of the number of variables/dimensions?
-        if self.tune:
-            max_stages = 5
-        else:
-            max_stages = self.max_stages
-
+        max_stages = 5 if self.tune else self.max_stages
         if self.idx == bart.m:
             self.idx = 0
 
@@ -204,7 +200,7 @@ class PGBART(ArrayStepShared):
         )
         likelihood_logp = self.likelihood_logp(new_tree.predict_output(num_observations))
         log_weight = likelihood_logp - self.log_num_particles
-        for i in range(1, self.num_particles):
+        for _ in range(1, self.num_particles):
             particles.append(
                 ParticleTree(new_tree, self.bart.prior_prob_leaf_node, log_weight, likelihood_logp)
             )
@@ -215,8 +211,7 @@ class PGBART(ArrayStepShared):
         """
         resample a set of particles given its weights
         """
-        particles = np.random.choice(particles, size=len(particles), p=weights)
-        return particles
+        return np.random.choice(particles, size=len(particles), p=weights)
 
 
 class ParticleTree:

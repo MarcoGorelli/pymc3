@@ -252,16 +252,16 @@ def build_named_node_tree(graphs):
         leaf_dict.update(nn)
         # Update the discovered parental relationships
         for k in nnd.keys():
-            if k not in named_nodes_descendents.keys():
-                named_nodes_descendents[k] = nnd[k]
-            else:
+            if k in named_nodes_descendents:
                 named_nodes_descendents[k].update(nnd[k])
+            else:
+                named_nodes_descendents[k] = nnd[k]
         # Update the discovered child relationships
         for k in nna.keys():
-            if k not in named_nodes_ancestors.keys():
-                named_nodes_ancestors[k] = nna[k]
-            else:
+            if k in named_nodes_ancestors:
                 named_nodes_ancestors[k].update(nna[k])
+            else:
+                named_nodes_ancestors[k] = nna[k]
     return leaf_dict, named_nodes_descendents, named_nodes_ancestors
 
 
@@ -391,10 +391,10 @@ def modelcontext(model: Optional["Model"]) -> "Model":
     if model is None:
         model = Model.get_context(error_if_none=False)
 
-        if model is None:
-            # TODO: This should be a ValueError, but that breaks
-            # ArviZ (and others?), so might need a deprecation.
-            raise TypeError("No model on context stack.")
+    if model is None:
+        # TODO: This should be a ValueError, but that breaks
+        # ArviZ (and others?), so might need a deprecation.
+        raise TypeError("No model on context stack.")
     return model
 
 
@@ -721,17 +721,12 @@ class ValueGradFunction:
                 "Invalid shape for array. Must be {} but is {}.".format((self.size,), array.shape)
             )
 
-        if grad_out is None:
-            out = np.empty_like(array)
-        else:
-            out = grad_out
-
+        out = np.empty_like(array) if grad_out is None else grad_out
         output = self._theano_function(array)
         if grad_out is None:
             return output
-        else:
-            np.copyto(out, output[1])
-            return output[0]
+        np.copyto(out, output[1])
+        return output[0]
 
     @property
     def profile(self):
@@ -936,9 +931,7 @@ class Model(Factor, WithMemoization, metaclass=ContextMeta):
     def bijection(self):
         vars = inputvars(self.vars)
 
-        bij = DictToArrayBijection(ArrayOrdering(vars), self.test_point)
-
-        return bij
+        return DictToArrayBijection(ArrayOrdering(vars), self.test_point)
 
     @property
     def dict_to_array(self):
@@ -996,10 +989,7 @@ class Model(Factor, WithMemoization, metaclass=ContextMeta):
         with self:
             factors = [var.logpt for var in self.basic_RVs] + self.potentials
             logp = tt.sum([tt.sum(factor) for factor in factors])
-            if self.name:
-                logp.name = "__logp_%s" % self.name
-            else:
-                logp.name = "__logp"
+            logp.name = "__logp_%s" % self.name if self.name else "__logp"
             return logp
 
     @property
@@ -1012,10 +1002,7 @@ class Model(Factor, WithMemoization, metaclass=ContextMeta):
         with self:
             factors = [var.logp_nojact for var in self.basic_RVs] + self.potentials
             logp = tt.sum([tt.sum(factor) for factor in factors])
-            if self.name:
-                logp.name = "__logp_nojac_%s" % self.name
-            else:
-                logp.name = "__logp_nojac"
+            logp.name = "__logp_nojac_%s" % self.name if self.name else "__logp_nojac"
             return logp
 
     @property
@@ -1198,22 +1185,17 @@ class Model(Factor, WithMemoization, metaclass=ContextMeta):
 
     def name_for(self, name):
         """Checks if name has prefix and adds if needed"""
-        if self.prefix:
-            if not name.startswith(self.prefix):
-                return f"{self.prefix}{name}"
-            else:
-                return name
+        if self.prefix and not name.startswith(self.prefix):
+            return f"{self.prefix}{name}"
         else:
             return name
 
     def name_of(self, name):
         """Checks if name has prefix and deletes if needed"""
-        if not self.prefix or not name:
+        if not self.prefix or not name or not name.startswith(self.prefix):
             return name
-        elif name.startswith(self.prefix):
-            return name[len(self.prefix) :]
         else:
-            return name
+            return name[len(self.prefix) :]
 
     def __getitem__(self, key):
         try:
@@ -1346,8 +1328,7 @@ class Model(Factor, WithMemoization, metaclass=ContextMeta):
             for name, slc, shape, dtype in order.vmap
         }
         view = {vm.var: vm for vm in order.vmap}
-        flat_view = FlatView(inputvar, replacements, view)
-        return flat_view
+        return FlatView(inputvar, replacements, view)
 
     def check_test_point(self, test_point=None, round_vals=2):
         """Checks log probability of test_point for all random variables in the model.
@@ -1392,8 +1373,11 @@ class Model(Factor, WithMemoization, metaclass=ContextMeta):
         else:
             rv_reprs = [rv.__str__() for rv in all_rv]
             rv_reprs = [
-                rv_repr for rv_repr in rv_reprs if not "TransformedDistribution()" in rv_repr
+                rv_repr
+                for rv_repr in rv_reprs
+                if "TransformedDistribution()" not in rv_repr
             ]
+
             # align vars on their ~
             names = [s[: s.index("~") - 1] for s in rv_reprs]
             distrs = [s[s.index("~") + 2 :] for s in rv_reprs]
@@ -1570,10 +1554,7 @@ def _get_scaling(total_size, shape, ndim):
     if total_size is None:
         coef = floatX(1)
     elif isinstance(total_size, int):
-        if ndim >= 1:
-            denom = shape[0]
-        else:
-            denom = 1
+        denom = shape[0] if ndim >= 1 else 1
         coef = floatX(total_size) / floatX(denom)
     elif isinstance(total_size, (list, tuple)):
         if not all(isinstance(i, int) for i in total_size if (i is not Ellipsis and i is not None)):
@@ -1599,10 +1580,7 @@ def _get_scaling(total_size, shape, ndim):
             )
         elif (len(begin) + len(end)) == 0:
             return floatX(1)
-        if len(end) > 0:
-            shp_end = shape[-len(end) :]
-        else:
-            shp_end = np.asarray([])
+        shp_end = shape[-len(end) :] if len(end) > 0 else np.asarray([])
         shp_begin = shape[: len(begin)]
         begin_coef = [floatX(t) / shp_begin[i] for i, t in enumerate(begin) if t is not None]
         end_coef = [floatX(t) / shp_end[i] for i, t in enumerate(end) if t is not None]
@@ -1873,7 +1851,7 @@ def _walk_up_rv(rv, formatting="plain"):
         for parent in parents:
             all_rvs.extend(_walk_up_rv(parent, formatting=formatting))
     else:
-        name = rv.name if rv.name else "Constant"
+        name = rv.name or "Constant"
         fmt = r"\text{{{name}}}" if "latex" in formatting else "{name}"
         all_rvs.append(fmt.format(name=name))
     return all_rvs
@@ -2014,9 +1992,10 @@ def all_continuous(vars):
     """Check that vars not include discrete variables or BART variables, excepting ObservedRVs."""
 
     vars_ = [var for var in vars if not isinstance(var, pm.model.ObservedRV)]
-    if any(
-        [(var.dtype in pm.discrete_types or isinstance(var.distribution, pm.BART)) for var in vars_]
-    ):
-        return False
-    else:
-        return True
+    return not any(
+        (
+            var.dtype in pm.discrete_types
+            or isinstance(var.distribution, pm.BART)
+        )
+        for var in vars_
+    )

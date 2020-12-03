@@ -137,12 +137,11 @@ def try_to_set_test_value(node_in, node_out, s):
         if hasattr(i.tag, "test_value"):
             if not hasattr(s.tag, "test_value"):
                 continue
-            else:
-                tv = i.tag.test_value[None, ...]
-                tv = np.repeat(tv, s.tag.test_value, 0)
-                if _s is None:
-                    tv = tv[0]
-                o.tag.test_value = tv
+            tv = i.tag.test_value[None, ...]
+            tv = np.repeat(tv, s.tag.test_value, 0)
+            if _s is None:
+                tv = tv[0]
+            o.tag.test_value = tv
 
 
 class ObjectiveUpdates(theano.OrderedUpdates):
@@ -215,7 +214,7 @@ class ObjectiveFunction:
         :class:`ObjectiveUpdates`
         """
         if more_updates is None:
-            more_updates = dict()
+            more_updates = {}
         resulting_updates = ObjectiveUpdates()
         if self.test_params:
             self.add_test_updates(
@@ -254,7 +253,7 @@ class ObjectiveFunction:
         if more_tf_params is None:
             more_tf_params = []
         if more_replacements is None:
-            more_replacements = dict()
+            more_replacements = {}
         tf_target = self(
             tf_n_mc, more_tf_params=more_tf_params, more_replacements=more_replacements
         )
@@ -275,7 +274,7 @@ class ObjectiveFunction:
         if more_obj_params is None:
             more_obj_params = []
         if more_replacements is None:
-            more_replacements = dict()
+            more_replacements = {}
         obj_target = self(
             obj_n_mc, more_obj_params=more_obj_params, more_replacements=more_replacements
         )
@@ -354,10 +353,9 @@ class ObjectiveFunction:
             total_grad_norm_constraint=total_grad_norm_constraint,
         )
         if score:
-            step_fn = theano.function([], updates.loss, updates=updates, **fn_kwargs)
+            return theano.function([], updates.loss, updates=updates, **fn_kwargs)
         else:
-            step_fn = theano.function([], None, updates=updates, **fn_kwargs)
-        return step_fn
+            return theano.function([], None, updates=updates, **fn_kwargs)
 
     @change_flags(compute_test_value="off")
     def score_function(
@@ -389,10 +387,7 @@ class ObjectiveFunction:
 
     @change_flags(compute_test_value="off")
     def __call__(self, nmc, **kwargs):
-        if "more_tf_params" in kwargs:
-            m = -1.0
-        else:
-            m = 1.0
+        m = -1.0 if "more_tf_params" in kwargs else 1.0
         a = self.op.apply(self.tf)
         a = self.approx.set_size_and_deterministic(a, nmc, 0, kwargs.get("more_replacements"))
         return m * self.op.T(a)
@@ -471,8 +466,6 @@ class Operator:
         else:
             if f is not None:
                 warnings.warn("TestFunction for %s is redundant and removed" % self, stacklevel=3)
-            else:
-                pass
             f = TestFunction()
         f.setup(self.approx)
         return self.objective_class(self, f)
@@ -496,11 +489,8 @@ def collect_shared_to_list(params):
     List
     """
     if isinstance(params, dict):
-        return list(
-            t[1]
-            for t in sorted(params.items(), key=lambda t: t[0])
-            if isinstance(t[1], theano.compile.SharedVariable)
-        )
+        return [t[1] for t in sorted(params.items(), key=lambda t: t[0])
+                    if isinstance(t[1], theano.compile.SharedVariable)]
     elif params is None:
         return []
     else:
@@ -832,7 +822,7 @@ class Group(WithMemoization):
         if isinstance(vfam, str):
             vfam = vfam.lower()
         if options is None:
-            options = dict()
+            options = {}
         self.options = options
         self._vfam = vfam
         self._local = local
@@ -851,10 +841,10 @@ class Group(WithMemoization):
 
     @classmethod
     def get_param_spec_for(cls, **kwargs):
-        res = dict()
-        for name, fshape in cls.__param_spec__.items():
-            res[name] = tuple(eval(s, kwargs) for s in fshape)
-        return res
+        return {
+            name: tuple(eval(s, kwargs) for s in fshape)
+            for name, fshape in cls.__param_spec__.items()
+        }
 
     def _check_user_params(self, **kwargs):
         R"""*Dev* - checks user params, allocates them if they are correct, returns True.
@@ -882,7 +872,7 @@ class Group(WithMemoization):
                     givens=givens, needed=needed
                 )
             )
-        self._user_params = dict()
+        self._user_params = {}
         spec = self.get_param_spec_for(d=self.ddim, **kwargs.pop("spec_kw", {}))
         for name, param in self.user_params.items():
             shape = spec[name]
@@ -932,8 +922,8 @@ class Group(WithMemoization):
         if self.group is None:
             # delayed init
             self.group = group
-        if self.batched and len(group) > 1:
-            if self.local:  # better error message
+        if self.batched and len(group) > 1:  # better error message
+            if self.local:
                 raise LocalGroupError("Local groups with more than 1 variable are not supported")
             else:
                 raise BatchedGroupError(
@@ -946,7 +936,7 @@ class Group(WithMemoization):
         # I do some staff that is not supported by standard __init__
         # so I have to to it by myself
         self.ordering = ArrayOrdering([])
-        self.replacements = dict()
+        self.replacements = {}
         self.group = [get_transformed(var) for var in self.group]
         for var in self.group:
             if isinstance(var.distribution, pm.Discrete):
@@ -959,10 +949,7 @@ class Group(WithMemoization):
                     else:
                         raise BatchedGroupError("Batched variable should not be scalar")
                 self.ordering.size += (np.prod(var.dshape[1:])).astype(int)
-                if self.local:
-                    shape = (-1,) + var.dshape[1:]
-                else:
-                    shape = var.dshape
+                shape = (-1,) + var.dshape[1:] if self.local else var.dshape
             else:
                 self.ordering.size += var.dsize
                 shape = var.dshape
@@ -1081,8 +1068,7 @@ class Group(WithMemoization):
                 return getattr(self._rng, dist_name)(shape)
         else:
             sample = getattr(self._rng, dist_name)(shape)
-            initial = tt.switch(deterministic, tt.ones(shape, dtype) * dist_map, sample)
-            return initial
+            return tt.switch(deterministic, tt.ones(shape, dtype) * dist_map, sample)
 
     @node_property
     def symbolic_random(self):
@@ -1200,13 +1186,13 @@ class Group(WithMemoization):
     @node_property
     def symbolic_logq(self):
         """*Dev* - correctly scaled `self.symbolic_logq_not_scaled`"""
-        if self.local:
-            s = self.group[0].scaling
-            s = self.to_flat_input(s)
-            s = self.symbolic_single_sample(s)
-            return self.symbolic_logq_not_scaled * s
-        else:
+        if not self.local:
             return self.symbolic_logq_not_scaled
+
+        s = self.group[0].scaling
+        s = self.to_flat_input(s)
+        s = self.symbolic_single_sample(s)
+        return self.symbolic_logq_not_scaled * s
 
     @node_property
     def logq(self):
@@ -1281,7 +1267,7 @@ class Approximation(WithMemoization):
         model = modelcontext(model)
         if not model.free_RVs:
             raise TypeError("Model does not have FreeRVs")
-        self.groups = list()
+        self.groups = []
         seen = set()
         rest = None
         for g in groups:
@@ -1298,9 +1284,8 @@ class Approximation(WithMemoization):
         if set(model.free_RVs) - seen:
             if rest is None:
                 raise GroupError("No approximation is specified for the rest variables")
-            else:
-                rest.__init_group__(list(set(model.free_RVs) - seen))
-                self.groups.append(rest)
+            rest.__init_group__(list(set(model.free_RVs) - seen))
+            self.groups.append(rest)
         self.model = model
 
     @property
@@ -1645,11 +1630,11 @@ class Approximation(WithMemoization):
 
     @property
     def has_global(self):
-        return any(not c for c in self.collect("local"))
+        return not all(self.collect("local"))
 
     @property
     def has_batched(self):
-        return any(not c for c in self.collect("batched"))
+        return not all(self.collect("batched"))
 
     @node_property
     def symbolic_random(self):
@@ -1658,9 +1643,8 @@ class Approximation(WithMemoization):
     def __str__(self):
         if len(self.groups) < 5:
             return "Approximation{" + " & ".join(map(str, self.groups)) + "}"
-        else:
-            forprint = self.groups[:2] + ["..."] + self.groups[-2:]
-            return "Approximation{" + " & ".join(map(str, forprint)) + "}"
+        forprint = self.groups[:2] + ["..."] + self.groups[-2:]
+        return "Approximation{" + " & ".join(map(str, forprint)) + "}"
 
     @property
     def all_histograms(self):

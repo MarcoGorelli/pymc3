@@ -241,65 +241,66 @@ class Mixture(Distribution):
     def _comp_logp(self, value):
         comp_dists = self.comp_dists
 
-        if self.comp_is_distribution:
-            # Value can be many things. It can be the self tensor, the mode
-            # test point or it can be observed data. The latter case requires
-            # careful handling of shape, as the observed's shape could look
-            # like (repetitions,) + dist_shape, which does not include the last
-            # mixture axis. For this reason, we try to eval the value.shape,
-            # compare it with self.shape and shape_padright if we infer that
-            # the value holds observed data
-            try:
-                val_shape = tuple(value.shape.eval())
-            except AttributeError:
-                val_shape = value.shape
-            except theano.gof.MissingInputError:
-                val_shape = None
-            try:
-                self_shape = tuple(self.shape)
-            except AttributeError:
-                # Happens in __init__ when computing self.logp(comp_modes)
-                self_shape = None
-            comp_shape = tuple(comp_dists.shape)
-            ndim = value.ndim
-            if val_shape is not None and not (
-                (self_shape is not None and val_shape == self_shape) or val_shape == comp_shape
-            ):
-                # value is neither the test point nor the self tensor, it
-                # is likely to hold observed values, so we must compute the
-                # ndim discarding the dimensions that don't match
-                # self_shape
-                if self_shape and val_shape[-len(self_shape) :] == self_shape:
-                    # value has observed values for the Mixture
-                    ndim = len(self_shape)
-                elif comp_shape and val_shape[-len(comp_shape) :] == comp_shape:
-                    # value has observed for the Mixture components
-                    ndim = len(comp_shape)
-                else:
-                    # We cannot infer what was passed, we handle this
-                    # as was done in earlier versions of Mixture. We pad
-                    # always if ndim is lower or equal to 1  (default
-                    # legacy implementation)
-                    if ndim <= 1:
-                        ndim = len(comp_dists.shape) - 1
-            else:
-                # We reach this point if value does not hold observed data, so
-                # we can use its ndim safely to determine shape padding, or it
-                # holds something that we cannot infer, so we revert to using
-                # the value's ndim for shape padding.
-                # We will always pad a single dimension if ndim is lower or
-                # equal to 1 (default legacy implementation)
-                if ndim <= 1:
-                    ndim = len(comp_dists.shape) - 1
-            if ndim < len(comp_dists.shape):
-                value_ = tt.shape_padright(value, len(comp_dists.shape) - ndim)
-            else:
-                value_ = value
-            return comp_dists.logp(value_)
-        else:
+        if not self.comp_is_distribution:
             return tt.squeeze(
                 tt.stack([comp_dist.logp(value) for comp_dist in comp_dists], axis=-1)
             )
+
+        # Value can be many things. It can be the self tensor, the mode
+        # test point or it can be observed data. The latter case requires
+        # careful handling of shape, as the observed's shape could look
+        # like (repetitions,) + dist_shape, which does not include the last
+        # mixture axis. For this reason, we try to eval the value.shape,
+        # compare it with self.shape and shape_padright if we infer that
+        # the value holds observed data
+        try:
+            val_shape = tuple(value.shape.eval())
+        except AttributeError:
+            val_shape = value.shape
+        except theano.gof.MissingInputError:
+            val_shape = None
+        try:
+            self_shape = tuple(self.shape)
+        except AttributeError:
+            # Happens in __init__ when computing self.logp(comp_modes)
+            self_shape = None
+        comp_shape = tuple(comp_dists.shape)
+        ndim = value.ndim
+        if val_shape is None or (
+            (self_shape is not None and val_shape == self_shape)
+            or val_shape == comp_shape
+        ):
+            # We reach this point if value does not hold observed data, so
+            # we can use its ndim safely to determine shape padding, or it
+            # holds something that we cannot infer, so we revert to using
+            # the value's ndim for shape padding.
+            # We will always pad a single dimension if ndim is lower or
+            # equal to 1 (default legacy implementation)
+            if ndim <= 1:
+                ndim = len(comp_dists.shape) - 1
+        else:
+            # value is neither the test point nor the self tensor, it
+            # is likely to hold observed values, so we must compute the
+            # ndim discarding the dimensions that don't match
+            # self_shape
+            if self_shape and val_shape[-len(self_shape) :] == self_shape:
+                # value has observed values for the Mixture
+                ndim = len(self_shape)
+            elif comp_shape and val_shape[-len(comp_shape) :] == comp_shape:
+                # value has observed for the Mixture components
+                ndim = len(comp_shape)
+            else:
+                # We cannot infer what was passed, we handle this
+                # as was done in earlier versions of Mixture. We pad
+                # always if ndim is lower or equal to 1  (default
+                # legacy implementation)
+                if ndim <= 1:
+                    ndim = len(comp_dists.shape) - 1
+        if ndim < len(comp_dists.shape):
+            value_ = tt.shape_padright(value, len(comp_dists.shape) - ndim)
+        else:
+            value_ = value
+        return comp_dists.logp(value_)
 
     def _comp_means(self):
         try:
@@ -470,11 +471,11 @@ class Mixture(Distribution):
             param_shape = np.broadcast(np.empty(w_shape), np.empty(broadcast_shape)).shape
         else:
             param_shape = np.broadcast(np.empty(w_shape), np.empty(broadcast_shape + (1,))).shape
-        if np.asarray(self.shape).size != 0:
-            dist_shape = np.broadcast(np.empty(self.shape), np.empty(param_shape[:-1])).shape
-        else:
+        if np.asarray(self.shape).size == 0:
             dist_shape = param_shape[:-1]
 
+        else:
+            dist_shape = np.broadcast(np.empty(self.shape), np.empty(param_shape[:-1])).shape
         # Try to determine the size that must be used to get the mixture
         # components (i.e. get random choices using w).
         # 1. There must be size independent choices based on w.
@@ -522,16 +523,12 @@ class Mixture(Distribution):
 
         # We get an integer _size instead of a tuple size for drawing the
         # mixture, then we just reshape the output
-        if size is None:
-            _size = None
-        else:
-            _size = int(np.prod(size))
-
+        _size = None if size is None else int(np.prod(size))
         # Compute the total size of the mixture's random call with size
-        if _size is not None:
-            output_size = int(_size * np.prod(dist_shape) * param_shape[-1])
-        else:
+        if _size is None:
             output_size = int(np.prod(dist_shape) * param_shape[-1])
+        else:
+            output_size = int(_size * np.prod(dist_shape) * param_shape[-1])
         # Get the size we need for the mixture's random call
         if self.comp_is_distribution:
             mixture_size = int(output_size // np.prod(broadcast_shape))
@@ -663,11 +660,11 @@ class MixtureSameFamily(Distribution):
         self.comp_dists = comp_dists
         if mixture_axis < 0:
             mixture_axis = len(comp_dists.shape) + mixture_axis
-            if mixture_axis < 0:
-                raise ValueError(
-                    "`mixture_axis` is supposed to be in shape of components' distribution. "
-                    f"Got {mixture_axis + len(comp_dists.shape)} axis instead out of the bounds."
-                )
+        if mixture_axis < 0:
+            raise ValueError(
+                "`mixture_axis` is supposed to be in shape of components' distribution. "
+                f"Got {mixture_axis + len(comp_dists.shape)} axis instead out of the bounds."
+            )
         comp_shape = to_tuple(comp_dists.shape)
         self.shape = comp_shape[:mixture_axis] + comp_shape[mixture_axis + 1 :]
         self.mixture_axis = mixture_axis

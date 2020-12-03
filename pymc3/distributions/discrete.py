@@ -130,9 +130,9 @@ class Binomial(Discrete):
 
         return bound(
             binomln(n, value) + logpow(p, value) + logpow(1 - p, n - value),
-            0 <= value,
+            value >= 0,
             value <= n,
-            0 <= p,
+            p >= 0,
             p <= 1,
         )
 
@@ -218,8 +218,7 @@ class BetaBinomial(Discrete):
             )
         if quotient != 1:
             _n = np.tile(_n, quotient)
-        samples = np.reshape(stats.binom.rvs(n=_n, p=_p, size=_size), size)
-        return samples
+        return np.reshape(stats.binom.rvs(n=_n, p=_p, size=_size), size)
 
     def random(self, point=None, size=None):
         r"""
@@ -437,11 +436,14 @@ class DiscreteWeibull(Discrete):
         beta = self.beta
 
         return bound(
-            tt.log(tt.power(q, tt.power(value, beta)) - tt.power(q, tt.power(value + 1, beta))),
-            0 <= value,
-            0 < q,
+            tt.log(
+                tt.power(q, tt.power(value, beta))
+                - tt.power(q, tt.power(value + 1, beta))
+            ),
+            value >= 0,
+            q > 0,
             q < 1,
-            0 < beta,
+            beta > 0,
         )
 
     def _ppf(self, p):
@@ -642,22 +644,20 @@ class NegativeBinomial(Discrete):
     def get_mu_alpha(self, mu=None, alpha=None, p=None, n=None):
         self._param_type = ["mu", "alpha"]
         if alpha is None:
-            if n is not None:
-                self._param_type[1] = "n"
-                self.n = tt.as_tensor_variable(intX(n))
-                alpha = n
-            else:
+            if n is None:
                 raise ValueError("Incompatible parametrization. Must specify either alpha or n.")
+            self._param_type[1] = "n"
+            self.n = tt.as_tensor_variable(intX(n))
+            alpha = n
         elif n is not None:
             raise ValueError("Incompatible parametrization. Can't specify both alpha and n.")
 
         if mu is None:
-            if p is not None:
-                self._param_type[0] = "p"
-                self.p = tt.as_tensor_variable(floatX(p))
-                mu = alpha * (1 - p) / p
-            else:
+            if p is None:
                 raise ValueError("Incompatible parametrization. Must specify either mu or p.")
+            self._param_type[0] = "p"
+            self.p = tt.as_tensor_variable(floatX(p))
+            mu = alpha * (1 - p) / p
         elif p is not None:
             raise ValueError("Incompatible parametrization. Can't specify both mu and p.")
 
@@ -806,7 +806,7 @@ class Geometric(Discrete):
         TensorVariable
         """
         p = self.p
-        return bound(tt.log(p) + logpow(1 - p, value - 1), 0 <= p, p <= 1, value >= 1)
+        return bound(tt.log(p) + logpow(1 - p, value - 1), p >= 0, p <= 1, value >= 1)
 
 
 class DiscreteUniform(Discrete):
@@ -1185,7 +1185,7 @@ class ZeroInflatedPoisson(Discrete):
             logaddexp(tt.log1p(-psi), tt.log(psi) - theta),
         )
 
-        return bound(logp_val, 0 <= value, 0 <= psi, psi <= 1, 0 <= theta)
+        return bound(logp_val, value >= 0, psi >= 0, psi <= 1, theta >= 0)
 
 
 class ZeroInflatedBinomial(Discrete):
@@ -1293,7 +1293,9 @@ class ZeroInflatedBinomial(Discrete):
             logaddexp(tt.log1p(-psi), tt.log(psi) + n * tt.log1p(-p)),
         )
 
-        return bound(logp_val, 0 <= value, value <= n, 0 <= psi, psi <= 1, 0 <= p, p <= 1)
+        return bound(
+            logp_val, value >= 0, value <= n, psi >= 0, psi <= 1, p >= 0, p <= 1
+        )
 
 
 class ZeroInflatedNegativeBinomial(Discrete):
@@ -1432,7 +1434,7 @@ class ZeroInflatedNegativeBinomial(Discrete):
 
         logp_val = tt.switch(tt.gt(value, 0), logp_other, logp_0)
 
-        return bound(logp_val, 0 <= value, 0 <= psi, psi <= 1, mu > 0, alpha > 0)
+        return bound(logp_val, value >= 0, psi >= 0, psi <= 1, mu > 0, alpha > 0)
 
 
 class OrderedLogistic(Categorical):

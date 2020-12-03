@@ -68,18 +68,14 @@ def bound(logp, *conditions, **kwargs):
     """
     broadcast_conditions = kwargs.get("broadcast_conditions", True)
 
-    if broadcast_conditions:
-        alltrue = alltrue_elemwise
-    else:
-        alltrue = alltrue_scalar
-
+    alltrue = alltrue_elemwise if broadcast_conditions else alltrue_scalar
     return tt.switch(alltrue(conditions), logp, -np.inf)
 
 
 def alltrue_elemwise(vals):
     ret = 1
     for c in vals:
-        ret = ret * (1 * c)
+        ret *= 1 * c
     return ret
 
 

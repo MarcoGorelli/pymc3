@@ -111,8 +111,7 @@ class DifferentialEquation(theano.Op):
             parameter vector (y0, theta)
         """
         dydt, ddt_dydp = self._augmented_func(Y[: self.n_states], t, p, Y[self.n_states :])
-        derivatives = np.concatenate([dydt, ddt_dydp])
-        return derivatives
+        return np.concatenate([dydt, ddt_dydp])
 
     def _simulate(self, y0, theta):
         # Initial condition comprised of state initial conditions and raveled sensitivity matrix
@@ -141,9 +140,9 @@ class DifferentialEquation(theano.Op):
         return theano.Apply(self, inputs, (states, sens))
 
     def __call__(self, y0, theta, return_sens=False, **kwargs):
-        if isinstance(y0, (list, tuple)) and not len(y0) == self.n_states:
+        if isinstance(y0, (list, tuple)) and len(y0) != self.n_states:
             raise ShapeError("Length of y0 is wrong.", actual=(len(y0),), expected=(self.n_states,))
-        if isinstance(theta, (list, tuple)) and not len(theta) == self.n_theta:
+        if isinstance(theta, (list, tuple)) and len(theta) != self.n_theta:
             raise ShapeError(
                 "Length of theta is wrong.", actual=(len(theta),), expected=(self.n_theta,)
             )
@@ -153,7 +152,7 @@ class DifferentialEquation(theano.Op):
         theta = tt.cast(tt.unbroadcast(tt.as_tensor_variable(theta), 0), floatX)
         inputs = [y0, theta]
         for i, (input_val, itype) in enumerate(zip(inputs, self._itypes)):
-            if not input_val.type == itype:
+            if input_val.type != itype:
                 raise ValueError(
                     f"Input {i} of type {input_val.type} does not have the expected type of {itype}"
                 )
@@ -168,13 +167,13 @@ class DifferentialEquation(theano.Op):
             )
 
             # check types of simulation result
-            if not test_states.dtype == self._otypes[0].dtype:
+            if test_states.dtype != self._otypes[0].dtype:
                 raise DtypeError(
                     "Simulated states have the wrong type.",
                     actual=test_states.dtype,
                     expected=self._otypes[0].dtype,
                 )
-            if not test_sens.dtype == self._otypes[1].dtype:
+            if test_sens.dtype != self._otypes[1].dtype:
                 raise DtypeError(
                     "Simulated sensitivities have the wrong type.",
                     actual=test_sens.dtype,
@@ -184,13 +183,13 @@ class DifferentialEquation(theano.Op):
             # check shapes of simulation result
             expected_states_shape = (self.n_times, self.n_states)
             expected_sens_shape = (self.n_times, self.n_states, self.n_p)
-            if not test_states.shape == expected_states_shape:
+            if test_states.shape != expected_states_shape:
                 raise ShapeError(
                     "Simulated states have the wrong shape.",
                     test_states.shape,
                     expected_states_shape,
                 )
-            if not test_sens.shape == expected_sens_shape:
+            if test_sens.shape != expected_sens_shape:
                 raise ShapeError(
                     "Simulated sensitivities have the wrong shape.",
                     test_sens.shape,
@@ -212,8 +211,7 @@ class DifferentialEquation(theano.Op):
 
     def infer_shape(self, node, input_shapes):
         s_y0, s_theta = input_shapes
-        output_shapes = [(self.n_times, self.n_states), (self.n_times, self.n_states, self.n_p)]
-        return output_shapes
+        return [(self.n_times, self.n_states), (self.n_times, self.n_states, self.n_p)]
 
     def grad(self, inputs, output_grads):
         _log.debug("grad w.r.t. inputs {}".format(hash(tuple(inputs))))

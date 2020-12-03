@@ -39,7 +39,7 @@ class BaseBART(NoDistribution):
         if m < 1:
             raise ValueError("The number of trees m must be greater than zero")
 
-        if alpha <= 0 or 1 <= alpha:
+        if alpha <= 0 or alpha >= 1:
             raise ValueError(
                 "The value for the alpha parameter for the tree structure "
                 "must be in the interval (0, 1)"
@@ -152,19 +152,18 @@ class BaseBART(NoDistribution):
 
     def get_residuals(self):
         """Compute the residuals."""
-        R_j = self.Y - self.sum_trees_output
-        return R_j
+        return self.Y - self.sum_trees_output
 
     def get_residuals_loo(self, tree):
         """Compute the residuals without leaving the passed tree out."""
-        R_j = self.Y - (self.sum_trees_output - tree.predict_output(self.num_observations))
-        return R_j
+        return self.Y - (
+            self.sum_trees_output - tree.predict_output(self.num_observations)
+        )
 
     def draw_leaf_value(self, idx_data_points):
         """ Draw the residual mean."""
         R_j = self.get_residuals()[idx_data_points]
-        draw = self.mean(R_j)
-        return draw
+        return self.mean(R_j)
 
 
 def compute_prior_probability(alpha):
@@ -203,9 +202,7 @@ def fast_mean():
     @jit
     def mean(a):
         count = a.shape[0]
-        suma = 0
-        for i in range(count):
-            suma += a[i]
+        suma = sum(a[i] for i in range(count))
         return suma / count
 
     return mean

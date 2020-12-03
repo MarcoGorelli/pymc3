@@ -44,9 +44,7 @@ def _check_minibatches(minibatch_tensors, minibatches):
 def prior_dlogp(vars, model, flat_view):
     """Returns the gradient of the prior on the parameters as a vector of size D x 1"""
     terms = tt.concatenate([theano.grad(var.logpt, var).flatten() for var in vars], axis=0)
-    dlogp = theano.clone(terms, flat_view.replacements, strict=False)
-
-    return dlogp
+    return theano.clone(terms, flat_view.replacements, strict=False)
 
 
 def elemwise_dlogL(vars, model, flat_view):
@@ -66,8 +64,9 @@ def elemwise_dlogL(vars, model, flat_view):
             sequences=[tt.arange(logL.shape[0])],
         )
         terms.append(output)
-    dlogL = theano.clone(tt.concatenate(terms, axis=1), flat_view.replacements, strict=False)
-    return dlogL
+    return theano.clone(
+        tt.concatenate(terms, axis=1), flat_view.replacements, strict=False
+    )
 
 
 class BaseStochasticGradient(ArrayStepShared):

@@ -208,9 +208,11 @@ def build_model(distfam, valuedomain, vardomains, extra_args=None):
     if extra_args is None:
         extra_args = {}
     with Model() as m:
-        vals = {}
-        for v, dom in vardomains.items():
-            vals[v] = Flat(v, dtype=dom.dtype, shape=dom.shape, testval=dom.vals[0])
+        vals = {
+            v: Flat(v, dtype=dom.dtype, shape=dom.shape, testval=dom.vals[0])
+            for v, dom in vardomains.items()
+        }
+
         vals.update(extra_args)
         distfam("value", shape=valuedomain.shape, transform=None, **vals)
     return m
@@ -253,7 +255,7 @@ def integrate_nd(f, domain, shape, dtype):
 
 
 def multinomial_logpdf(value, n, p):
-    if value.sum() == n and (0 <= value).all() and (value <= n).all():
+    if value.sum() == n and (value >= 0).all() and (value <= n).all():
         logpdf = scipy.special.gammaln(n + 1)
         logpdf -= scipy.special.gammaln(value + 1).sum()
         logpdf += logpow(p, value).sum()
@@ -284,26 +286,20 @@ def Vector(D, n):
 
 
 def SortedVector(n):
-    vals = []
     np.random.seed(42)
-    for _ in range(10):
-        vals.append(np.sort(np.random.randn(n)))
+    vals = [np.sort(np.random.randn(n)) for _ in range(10)]
     return Domain(vals, edges=(None, None))
 
 
 def UnitSortedVector(n):
-    vals = []
     np.random.seed(42)
-    for _ in range(10):
-        vals.append(np.sort(np.random.rand(n)))
+    vals = [np.sort(np.random.rand(n)) for _ in range(10)]
     return Domain(vals, edges=(None, None))
 
 
 def RealMatrix(n, m):
-    vals = []
     np.random.seed(42)
-    for _ in range(10):
-        vals.append(np.random.randn(n, m))
+    vals = [np.random.randn(n, m) for _ in range(10)]
     return Domain(vals, edges=(None, None))
 
 
@@ -1410,7 +1406,7 @@ class TestMatchesScipy(SeededTest):
         )
 
         assert_almost_equal(
-            sum([model_single.fastlogp({"m": val}) for val in vals]),
+            sum(model_single.fastlogp({"m": val}) for val in vals),
             model_many.fastlogp({"m": vals}),
             decimal=4,
         )
@@ -1424,7 +1420,7 @@ class TestMatchesScipy(SeededTest):
             Multinomial("m", n=ns, p=p, shape=vals.shape)
 
         assert_almost_equal(
-            sum([multinomial_logpdf(val, n, p) for val, n in zip(vals, ns)]),
+            sum(multinomial_logpdf(val, n, p) for val, n in zip(vals, ns)),
             model.fastlogp({"m": vals}),
             decimal=4,
         )
@@ -1438,7 +1434,7 @@ class TestMatchesScipy(SeededTest):
             Multinomial("m", n=ns, p=ps, shape=vals.shape)
 
         assert_almost_equal(
-            sum([multinomial_logpdf(val, n, p) for val, n, p in zip(vals, ns, ps)]),
+            sum(multinomial_logpdf(val, n, p) for val, n, p in zip(vals, ns, ps)),
             model.fastlogp({"m": vals}),
             decimal=4,
         )
@@ -1452,7 +1448,7 @@ class TestMatchesScipy(SeededTest):
             Multinomial("m", n=n, p=ps, shape=vals.shape)
 
         assert_almost_equal(
-            sum([multinomial_logpdf(val, n, p) for val, p in zip(vals, ps)]),
+            sum(multinomial_logpdf(val, n, p) for val, p in zip(vals, ps)),
             model.fastlogp({"m": vals}),
             decimal=4,
         )
@@ -1951,7 +1947,6 @@ class TestBugfixes:
         actual_a = actual_t.eval()
         assert isinstance(actual_a, np.ndarray)
         assert actual_a.shape == (X.shape[0],)
-        pass
 
 
 def test_serialize_density_dist():

@@ -138,11 +138,7 @@ class AR(distribution.Continuous):
             else:
                 p = shape_[0]
 
-        if constant:
-            self.p = p - 1
-        else:
-            self.p = p
-
+        self.p = p - 1 if constant else p
         self.constant = constant
         self.rho = rho = tt.as_tensor_variable(rho)
         self.init = init

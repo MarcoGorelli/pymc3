@@ -510,10 +510,10 @@ class TestStepMethods:  # yield test doesn't work subclassing object
 
         on multiple commits.
         """
-        n_steps = 100
         with Model() as model:
             x = Normal("x", mu=0, sigma=1)
             y = Normal("y", mu=x, sigma=1, observed=1)
+            n_steps = 100
             if step_method.__name__ == "NUTS":
                 step = step_method(scaling=model.test_point)
                 trace = sample(
@@ -735,7 +735,6 @@ class TestPopulationSamplers:
                     sample(draws=10, tune=10, chains=1, cores=1, step=step)
                 # don't parallelize to make test faster
                 sample(draws=10, tune=10, chains=4, cores=1, step=step)
-        pass
 
     def test_demcmc_warning_on_small_populations(self):
         """Test that a warning is raised when n_chains <= n_dims"""
@@ -751,7 +750,6 @@ class TestPopulationSamplers:
                     cores=1,
                     compute_convergence_checks=False,
                 )
-        pass
 
     def test_demcmc_tune_parameter(self):
         """Tests that validity of the tune setting is checked"""
@@ -769,7 +767,6 @@ class TestPopulationSamplers:
 
             with pytest.raises(ValueError):
                 DEMetropolis(tune="foo")
-        pass
 
     def test_nonparallelized_chains_are_random(self):
         with Model() as model:
@@ -782,7 +779,6 @@ class TestPopulationSamplers:
                 assert len(set(samples)) == 4, "Parallelized {} " "chains are identical.".format(
                     stepper
                 )
-        pass
 
     def test_parallelized_chains_are_random(self):
         with Model() as model:
@@ -795,7 +791,6 @@ class TestPopulationSamplers:
                 assert len(set(samples)) == 4, "Parallelized {} " "chains are identical.".format(
                     stepper
                 )
-        pass
 
 
 class TestMetropolis:
@@ -816,7 +811,6 @@ class TestMetropolis:
             # check that the tuned settings changed and were reset
             assert trace.get_sampler_stats("scaling", chains=c)[0] == 0.1
             assert trace.get_sampler_stats("scaling", chains=c)[-1] != 0.1
-        pass
 
 
 class TestDEMetropolisZ:
@@ -836,7 +830,6 @@ class TestDEMetropolisZ:
             assert trace.get_sampler_stats("lambda", chains=c)[0] == 0.92
             assert trace.get_sampler_stats("lambda", chains=c)[-1] != 0.92
             assert set(trace.get_sampler_stats("tune", chains=c)) == {True, False}
-        pass
 
     def test_tuning_epsilon_parallel(self):
         with Model() as pmodel:
@@ -854,7 +847,6 @@ class TestDEMetropolisZ:
             assert trace.get_sampler_stats("scaling", chains=c)[0] == 0.002
             assert trace.get_sampler_stats("scaling", chains=c)[-1] != 0.002
             assert set(trace.get_sampler_stats("tune", chains=c)) == {True, False}
-        pass
 
     def test_tuning_none(self):
         with Model() as pmodel:
@@ -872,7 +864,6 @@ class TestDEMetropolisZ:
             assert len(set(trace.get_sampler_stats("lambda", chains=c))) == 1
             assert len(set(trace.get_sampler_stats("scaling", chains=c))) == 1
             assert set(trace.get_sampler_stats("tune", chains=c)) == {True, False}
-        pass
 
     def test_tuning_reset(self):
         """Re-use of the step method instance with cores=1 must not leak tuning information between chains."""
@@ -896,21 +887,19 @@ class TestDEMetropolisZ:
                 var_start = np.var(trace.get_values("n", chains=c)[:50, d])
                 var_end = np.var(trace.get_values("n", chains=c)[-100:, d])
                 assert var_start < 0.1 * var_end
-        pass
 
     def test_tune_drop_fraction(self):
-        tune = 300
-        tune_drop_fraction = 0.85
-        draws = 200
         with Model() as pmodel:
             Normal("n", 0, 2, shape=(3,))
+            tune_drop_fraction = 0.85
             step = DEMetropolisZ(tune_drop_fraction=tune_drop_fraction)
+            tune = 300
+            draws = 200
             trace = sample(
                 tune=tune, draws=draws, step=step, cores=1, chains=1, discard_tuned_samples=False
             )
             assert len(trace) == tune + draws
             assert len(step._history) == (tune - tune * tune_drop_fraction) + draws
-        pass
 
     @pytest.mark.parametrize(
         "variable,has_grad,outcome",
@@ -921,7 +910,6 @@ class TestDEMetropolisZ:
             Normal("n", 0, 2, shape=(3,))
             Binomial("b", n=2, p=0.3)
         assert DEMetropolisZ.competence(pmodel[variable], has_grad=has_grad) == outcome
-        pass
 
     @pytest.mark.parametrize("tune_setting", ["foo", True, False])
     def test_invalid_tune(self, tune_setting):
@@ -929,7 +917,6 @@ class TestDEMetropolisZ:
             Normal("n", 0, 2, shape=(3,))
             with pytest.raises(ValueError):
                 DEMetropolisZ(tune=tune_setting)
-        pass
 
     def test_custom_proposal_dist(self):
         with Model() as pmodel:
@@ -943,7 +930,6 @@ class TestDEMetropolisZ:
                 chains=3,
                 discard_tuned_samples=False,
             )
-        pass
 
 
 @pytest.mark.xfail(condition=(theano.config.floatX == "float32"), reason="Fails on float32")
@@ -1160,10 +1146,10 @@ class TestMLDA:
             Normal("x", 20.0, 5.0)
 
         possible_coarse_models = [coarse_model_0, coarse_model_1, coarse_model_2]
-        acc = []
-
         with Model():
             Normal("x", 5.0, 1.0)
+            acc = []
+
             for coarse_model in possible_coarse_models:
                 step = MLDA(coarse_models=[coarse_model], subsampling_rates=3)
                 trace = sample(chains=1, draws=500, tune=100, step=step)
@@ -1298,8 +1284,8 @@ class TestMLDA:
         _, model = simple_2model_continuous()
         _, model_coarse = simple_2model_continuous()
 
-        ts_0 = 0
         with model:
+            ts_0 = 0
             trace_0 = sample(
                 tune=ts_0,
                 draws=100,
@@ -1351,8 +1337,8 @@ class TestMLDA:
         assert trace_1.get_sampler_stats("base_scaling", chains=0)[-1, 0] < 100.0
         assert trace_1.get_sampler_stats("base_scaling", chains=0)[-1, 1] < 100.0
 
-        ts_2 = 0
         with model:
+            ts_2 = 0
             trace_2 = sample(
                 tune=ts_2,
                 draws=100,
@@ -1379,13 +1365,13 @@ class TestMLDA:
 
     def test_trace_length(self):
         """Check if trace length is as expected."""
-        tune = 100
-        draws = 50
         with Model() as coarse_model:
             Normal("n", 0, 2.2, shape=(3,))
         with Model():
             Normal("n", 0, 2, shape=(3,))
             step = MLDA(coarse_models=[coarse_model])
+            tune = 100
+            draws = 50
             trace = sample(tune=tune, draws=draws, step=step, chains=1, discard_tuned_samples=False)
             assert len(trace) == tune + draws
 

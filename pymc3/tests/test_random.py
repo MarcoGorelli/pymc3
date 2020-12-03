@@ -118,11 +118,11 @@ class TestDrawValues:
         # handled correctly by draw_values
         n_d = 500
         n_x = 2
-        n_y = 1
         n_g = 10
         g = np.random.randint(0, n_g, (n_d,))  # group
         x = np.random.randint(0, n_x, (n_d,))  # x factor
         with pm.Model():
+            n_y = 1
             multi_dim_rv = pm.Normal("multi_dim_rv", mu=0, sd=1, shape=(n_x, n_g, n_y))
             indexed_rv = multi_dim_rv[x, g, :]
             i = draw_values([indexed_rv])

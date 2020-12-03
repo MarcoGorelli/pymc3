@@ -91,10 +91,10 @@ class TestData(SeededTest):
             beta = pm.Normal("beta", 0, 10.0)
             pm.Normal("obs", beta * x, np.sqrt(1e-2), observed=y)
             pm.sample(1000, init=None, tune=1000, chains=1)
-        # Predict on new data.
-        new_x = [5.0, 6.0, 9.0]
         new_y = [5.0, 6.0, 9.0]
         with model:
+            # Predict on new data.
+            new_x = [5.0, 6.0, 9.0]
             pm.set_data(new_data={"x": new_x, "y": new_y})
             new_trace = pm.sample(1000, init=None, tune=1000, chains=1)
             pp_trace = pm.sample_posterior_predictive(new_trace, 1000)
@@ -121,8 +121,8 @@ class TestData(SeededTest):
 
         # Predict on new data
         new_index = np.array([0, 1, 2])
-        new_y = [5.0, 6.0, 9.0]
         with model:
+            new_y = [5.0, 6.0, 9.0]
             pm.set_data(new_data={"index": new_index, "y": new_y})
             pp_trace = pm.sample_posterior_predictive(trace, 1000, var_names=["alpha", "obs"])
             pp_tracef = pm.fast_sample_posterior_predictive(trace, 1000, var_names=["alpha", "obs"])

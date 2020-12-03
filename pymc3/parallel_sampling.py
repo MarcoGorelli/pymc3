@@ -103,28 +103,29 @@ class _Process:
         self._pickle_backend = pickle_backend
 
     def _unpickle_step_method(self):
+        if not self._step_method_is_pickled:
+            return
         unpickle_error = (
             "The model could not be unpickled. This is required for sampling "
             "with more than one core and multiprocessing context spawn "
             "or forkserver."
         )
-        if self._step_method_is_pickled:
-            if self._pickle_backend == "pickle":
-                try:
-                    self._step_method = pickle.loads(self._step_method)
-                except Exception:
-                    raise ValueError(unpickle_error)
-            elif self._pickle_backend == "dill":
-                try:
-                    import dill
-                except ImportError:
-                    raise ValueError("dill must be installed for pickle_backend='dill'.")
-                try:
-                    self._step_method = dill.loads(self._step_method)
-                except Exception:
-                    raise ValueError(unpickle_error)
-            else:
-                raise ValueError("Unknown pickle backend")
+        if self._pickle_backend == "pickle":
+            try:
+                self._step_method = pickle.loads(self._step_method)
+            except Exception:
+                raise ValueError(unpickle_error)
+        elif self._pickle_backend == "dill":
+            try:
+                import dill
+            except ImportError:
+                raise ValueError("dill must be installed for pickle_backend='dill'.")
+            try:
+                self._step_method = dill.loads(self._step_method)
+            except Exception:
+                raise ValueError(unpickle_error)
+        else:
+            raise ValueError("Unknown pickle backend")
 
     def run(self):
         try:
@@ -200,10 +201,7 @@ class _Process:
             elif msg[0] == "write_next":
                 self._write_point(point)
                 is_last = draw + 1 == self._draws + self._tune
-                if is_last:
-                    warns = self._collect_warnings()
-                else:
-                    warns = None
+                warns = self._collect_warnings() if is_last else None
                 self._msg_pipe.send(("writing_done", is_last, draw, tuning, stats, warns))
                 draw += 1
             else:

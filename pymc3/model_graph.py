@@ -38,12 +38,12 @@ class ModelGraph:
 
     def get_deterministics(self, var):
         """Compute the deterministic nodes of the graph, **not** including var itself."""
-        deterministics = []
         attrs = ("transformed", "logpt")
-        for v in self.var_list:
-            if v != var and all(not hasattr(v, attr) for attr in attrs):
-                deterministics.append(v)
-        return deterministics
+        return [
+            v
+            for v in self.var_list
+            if v != var and all(not hasattr(v, attr) for attr in attrs)
+        ]
 
     def _get_ancestors(self, var: Tensor, func) -> Set[Tensor]:
         """Get all ancestors of a function, doing some accounting for deterministics."""
@@ -103,10 +103,7 @@ class ModelGraph:
         input_map = {}  # type: Dict[str, Set[VarName]]
 
         def update_input_map(key: str, val: Set[VarName]):
-            if key in input_map:
-                input_map[key] = input_map[key].union(val)
-            else:
-                input_map[key] = val
+            input_map[key] = input_map[key].union(val) if key in input_map else val
 
         for var_name in self.var_names:
             var = self.model[var_name]
@@ -236,7 +233,7 @@ def model_to_graphviz(model=None, *, formatting: str = "plain"):
     formatting : str
         one of { "plain", "plain_with_params" }
     """
-    if not "plain" in formatting:
+    if "plain" not in formatting:
         raise ValueError(f"Unsupported formatting for graph nodes: '{formatting}'. See docstring.")
     model = pm.modelcontext(model)
     return ModelGraph(model).make_graph(formatting=formatting)

@@ -476,10 +476,7 @@ class Dirichlet(Continuous):
     def _random(self, a, size=None):
         gen = stats.dirichlet.rvs
         shape = tuple(np.atleast_1d(self.shape))
-        if size[-len(shape) :] == shape:
-            real_size = size[: -len(shape)]
-        else:
-            real_size = size
+        real_size = size[: -len(shape)] if size[-len(shape) :] == shape else size
         if self.size_prefix:
             if real_size and real_size[0] == 1:
                 real_size = real_size[1:] + self.size_prefix
@@ -512,8 +509,7 @@ class Dirichlet(Continuous):
         array
         """
         a = draw_values([self.a], point=point, size=size)[0]
-        samples = generate_samples(self._random, a=a, dist_shape=self.shape, size=size)
-        return samples
+        return generate_samples(self._random, a=a, dist_shape=self.shape, size=size)
 
     def logp(self, value):
         """
@@ -650,7 +646,7 @@ class Multinomial(Discrete):
         array
         """
         n, p = draw_values([self.n, self.p], point=point, size=size)
-        samples = generate_samples(
+        return generate_samples(
             self._random,
             n,
             p,
@@ -658,7 +654,6 @@ class Multinomial(Discrete):
             not_broadcast_kwargs={"raw_size": size},
             size=size,
         )
-        return samples
 
     def logp(self, x):
         """
@@ -1116,10 +1111,7 @@ class _LKJCholeskyCov(Continuous):
                 size = size[: len(size) - len(broadcast_shape)]
         # We will always provide _random with an integer size and then reshape
         # the output to get the correct size
-        if size is not None:
-            _size = np.prod(size)
-        else:
-            _size = 1
+        _size = np.prod(size) if size is not None else 1
         samples = self._random(n, eta, size=_size)
         if size is None:
             samples = samples[0]
@@ -1266,19 +1258,18 @@ def LKJCholeskyCov(name, eta, n, sd_dist, compute_corr=False, store_in_trace=Tru
     if not compute_corr:
         return packed_chol
 
-    else:
-        chol = pm.expand_packed_triangular(n, packed_chol, lower=True)
-        # compute covariance matrix
-        cov = tt.dot(chol, chol.T)
-        # extract standard deviations and rho
-        stds = tt.sqrt(tt.diag(cov))
-        inv_stds = 1 / stds
-        corr = inv_stds[None, :] * cov * inv_stds[:, None]
-        if store_in_trace:
-            stds = pm.Deterministic(f"{name}_stds", stds)
-            corr = pm.Deterministic(f"{name}_corr", corr)
+    chol = pm.expand_packed_triangular(n, packed_chol, lower=True)
+    # compute covariance matrix
+    cov = tt.dot(chol, chol.T)
+    # extract standard deviations and rho
+    stds = tt.sqrt(tt.diag(cov))
+    inv_stds = 1 / stds
+    corr = inv_stds[None, :] * cov * inv_stds[:, None]
+    if store_in_trace:
+        stds = pm.Deterministic(f"{name}_stds", stds)
+        corr = pm.Deterministic(f"{name}_corr", corr)
 
-        return chol, corr, stds
+    return chol, corr, stds
 
 
 class LKJCorr(Continuous):
@@ -1399,8 +1390,7 @@ class LKJCorr(Continuous):
         """
         n, eta = draw_values([self.n, self.eta], point=point, size=size)
         size = 1 if size is None else size
-        samples = generate_samples(self._random, n, eta, broadcast_shape=(size,))
-        return samples
+        return generate_samples(self._random, n, eta, broadcast_shape=(size,))
 
     def logp(self, x):
         """
@@ -1570,13 +1560,6 @@ class MatrixNormal(Continuous):
             self.rowcov = rowcov
         elif rowtau is not None:
             raise ValueError("rowtau not supported at this time")
-            self.m = rowtau.shape[0]
-            self._rowcov_type = "tau"
-            rowtau = tt.as_tensor_variable(rowtau)
-            if rowtau.ndim != 2:
-                raise ValueError("rowtau must be two dimensional.")
-            self.rowchol_tau = cholesky(rowtau)
-            self.rowtau = rowtau
         else:
             self.m = rowchol.shape[0]
             self._rowcov_type = "chol"
@@ -1601,13 +1584,6 @@ class MatrixNormal(Continuous):
             self.colcov = colcov
         elif coltau is not None:
             raise ValueError("coltau not supported at this time")
-            self.n = coltau.shape[0]
-            self._colcov_type = "tau"
-            coltau = tt.as_tensor_variable(coltau)
-            if coltau.ndim != 2:
-                raise ValueError("coltau must be two dimensional.")
-            self.colchol_tau = cholesky(coltau)
-            self.coltau = coltau
         else:
             self.n = colchol.shape[0]
             self._colcov_type = "chol"
@@ -1639,7 +1615,7 @@ class MatrixNormal(Continuous):
             size = ()
         if size in (None, ()):
             standard_normal = np.random.standard_normal((self.shape[0], colchol.shape[-1]))
-            samples = mu + np.matmul(rowchol, np.matmul(standard_normal, colchol.T))
+            return mu + np.matmul(rowchol, np.matmul(standard_normal, colchol.T))
         else:
             samples = []
             size = tuple(np.atleast_1d(size))
@@ -1655,8 +1631,7 @@ class MatrixNormal(Continuous):
                     samples.append(
                         mu[j] + np.matmul(rowchol[j], np.matmul(standard_normal, colchol[j].T))
                     )
-            samples = np.array(samples).reshape(size + tuple(self.shape))
-        return samples
+            return np.array(samples).reshape(size + tuple(self.shape))
 
     def _trquaddist(self, value):
         """Compute Tr[colcov^-1 @ (x - mu).T @ rowcov^-1 @ (x - mu)] and
@@ -1850,34 +1825,34 @@ class KroneckerNormal(Continuous):
         self.N = self.eigs.shape[0]
 
     def _setup_random(self):
-        if not hasattr(self, "mv_params"):
-            self.mv_params = {"mu": self.mu}
-            if self._cov_type == "cov":
-                cov = kronecker(*self.covs)
-                if self.is_noisy:
-                    cov = cov + self.sigma ** 2 * tt.identity_like(cov)
-                self.mv_params["cov"] = cov
-            elif self._cov_type == "chol":
-                if self.is_noisy:
-                    covs = []
-                    for eig, Q in zip(self.eigs_sep, self.Qs):
-                        cov_i = tt.dot(Q, tt.dot(tt.diag(eig), Q.T))
-                        covs.append(cov_i)
-                    cov = kronecker(*covs)
-                    if self.is_noisy:
-                        cov = cov + self.sigma ** 2 * tt.identity_like(cov)
-                    self.mv_params["chol"] = self.cholesky(cov)
-                else:
-                    self.mv_params["chol"] = kronecker(*self.chols)
-            elif self._cov_type == "evd":
+        if hasattr(self, "mv_params"):
+            return
+        self.mv_params = {"mu": self.mu}
+        if self._cov_type == "cov":
+            cov = kronecker(*self.covs)
+            if self.is_noisy:
+                cov = cov + self.sigma ** 2 * tt.identity_like(cov)
+            self.mv_params["cov"] = cov
+        elif self._cov_type == "chol":
+            if self.is_noisy:
                 covs = []
                 for eig, Q in zip(self.eigs_sep, self.Qs):
                     cov_i = tt.dot(Q, tt.dot(tt.diag(eig), Q.T))
                     covs.append(cov_i)
                 cov = kronecker(*covs)
-                if self.is_noisy:
-                    cov = cov + self.sigma ** 2 * tt.identity_like(cov)
-                self.mv_params["cov"] = cov
+                cov = cov + self.sigma ** 2 * tt.identity_like(cov)
+                self.mv_params["chol"] = self.cholesky(cov)
+            else:
+                self.mv_params["chol"] = kronecker(*self.chols)
+        elif self._cov_type == "evd":
+            covs = []
+            for eig, Q in zip(self.eigs_sep, self.Qs):
+                cov_i = tt.dot(Q, tt.dot(tt.diag(eig), Q.T))
+                covs.append(cov_i)
+            cov = kronecker(*covs)
+            if self.is_noisy:
+                cov = cov + self.sigma ** 2 * tt.identity_like(cov)
+            self.mv_params["cov"] = cov
 
     def random(self, point=None, size=None):
         """

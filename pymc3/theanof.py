@@ -355,7 +355,7 @@ class GeneratorOp(Op):
     def set_gen(self, gen):
         if not isinstance(gen, GeneratorAdapter):
             gen = GeneratorAdapter(gen)
-        if not gen.tensortype == self.generator.tensortype:
+        if gen.tensortype != self.generator.tensortype:
             raise ValueError("New generator should yield the same type")
         self.generator = gen
 
@@ -366,7 +366,7 @@ class GeneratorOp(Op):
             value = np.asarray(value, self.generator.tensortype.dtype)
             t1 = (False,) * value.ndim
             t2 = self.generator.tensortype.broadcastable
-            if not t1 == t2:
+            if t1 != t2:
                 raise ValueError("Default value should have the same type as generator")
             self.default = value
 
@@ -414,9 +414,7 @@ def tt_rng(random_seed=None):
     """
     if random_seed is None:
         return _tt_rng
-    else:
-        ret = MRG_RandomStreams(random_seed)
-        return ret
+    return MRG_RandomStreams(random_seed)
 
 
 def set_tt_rng(new_rng):
@@ -452,7 +450,7 @@ def set_theano_conf(values):
         if variable.fullname in values:
             variables[variable.fullname] = variable
             unknown.remove(variable.fullname)
-    if len(unknown) > 0:
+    if unknown:
         raise ValueError("Unknown theano config settings: %s" % unknown)
 
     old = {}
@@ -532,10 +530,7 @@ def take_along_axis(arr, indices, axis=0):
         arr_shape = (len(arr),)  # flatiter has no .shape
         _axis = 0
     else:
-        if axis < 0:
-            _axis = arr.ndim + axis
-        else:
-            _axis = axis
+        _axis = arr.ndim + axis if axis < 0 else axis
         if _axis < 0 or _axis >= arr.ndim:
             raise ValueError(
                 "Supplied `axis` value {} is out of bounds of an array with "

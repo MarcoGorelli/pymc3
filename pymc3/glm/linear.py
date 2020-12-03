@@ -75,17 +75,13 @@ class LinearComponent(Model):
         if intercept:
             x = tt.concatenate([tt.ones((x.shape[0], 1), x.dtype), x], axis=1)
             labels = ["Intercept"] + labels
-        coeffs = list()
+        coeffs = []
         for name in labels:
-            if name == "Intercept":
-                if name in vars:
-                    v = Deterministic(name, vars[name])
-                else:
-                    v = self.Var(name=name, dist=priors.get(name, self.default_intercept_prior))
-                coeffs.append(v)
+            if name in vars:
+                v = Deterministic(name, vars[name])
             else:
-                if name in vars:
-                    v = Deterministic(name, vars[name])
+                if name == "Intercept":
+                    v = self.Var(name=name, dist=priors.get(name, self.default_intercept_prior))
                 else:
                     v = self.Var(
                         name=name,
@@ -93,7 +89,7 @@ class LinearComponent(Model):
                             name, priors.get("Regressor", self.default_regressor_prior)
                         ),
                     )
-                coeffs.append(v)
+            coeffs.append(v)
         self.coeffs = tt.stack(coeffs, axis=0)
         self.y_est = x.dot(self.coeffs) + offset
 

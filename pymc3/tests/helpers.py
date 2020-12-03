@@ -90,18 +90,16 @@ class Matcher:
         Try to match a single stored value (dv) with a supplied value (v).
         """
         if isinstance(v, type(dv)):
-            result = False
+            return False
         elif not isinstance(dv, str) or k not in self._partial_matches:
-            result = v == dv
+            return v == dv
         else:
-            result = dv.find(v) >= 0
-        return result
+            return dv.find(v) >= 0
 
 
 def select_by_precision(float64, float32):
     """Helper function to choose reasonable decimal cutoffs for different floatX modes."""
-    decimal = float64 if theano.config.floatX == "float64" else float32
-    return decimal
+    return float64 if theano.config.floatX == "float64" else float32
 
 
 @contextlib.contextmanager

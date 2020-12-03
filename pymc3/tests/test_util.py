@@ -146,7 +146,6 @@ class TestExceptions:
         with pytest.raises(pm.exceptions.ShapeError) as exinfo:
             raise pm.exceptions.ShapeError("With shapes.", actual=(), expected="(5,4) or (?,?,6)")
         assert "(?,?,6)" in exinfo.value.args[0]
-        pass
 
     def test_dtype_error(self):
         with pytest.raises(pm.exceptions.DtypeError) as exinfo:
@@ -164,4 +163,3 @@ class TestExceptions:
         with pytest.raises(pm.exceptions.DtypeError) as exinfo:
             raise pm.exceptions.DtypeError("With types.", actual=int, expected=str)
         assert "int" in exinfo.value.args[0] and "str" in exinfo.value.args[0]
-        pass

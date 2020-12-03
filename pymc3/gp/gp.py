@@ -129,12 +129,10 @@ class Latent(Base):
         mu = self.mean_func(X)
         cov = stabilize(self.cov_func(X))
         shape = infer_shape(X, kwargs.pop("shape", None))
-        if reparameterize:
-            v = pm.Normal(name + "_rotated_", mu=0.0, sigma=1.0, shape=shape, **kwargs)
-            f = pm.Deterministic(name, mu + cholesky(cov).dot(v))
-        else:
-            f = pm.MvNormal(name, mu=mu, cov=cov, shape=shape, **kwargs)
-        return f
+        if not reparameterize:
+            return pm.MvNormal(name, mu=mu, cov=cov, shape=shape, **kwargs)
+        v = pm.Normal(name + "_rotated_", mu=0.0, sigma=1.0, shape=shape, **kwargs)
+        return pm.Deterministic(name, mu + cholesky(cov).dot(v))
 
     def prior(self, name, X, reparameterize=True, **kwargs):
         R"""
@@ -270,13 +268,13 @@ class TP(Latent):
         mu = self.mean_func(X)
         cov = stabilize(self.cov_func(X))
         shape = infer_shape(X, kwargs.pop("shape", None))
-        if reparameterize:
-            chi2 = pm.ChiSquared(name + "_chi2_", self.nu)
-            v = pm.Normal(name + "_rotated_", mu=0.0, sigma=1.0, shape=shape, **kwargs)
-            f = pm.Deterministic(name, (tt.sqrt(self.nu) / chi2) * (mu + cholesky(cov).dot(v)))
-        else:
-            f = pm.MvStudentT(name, nu=self.nu, mu=mu, cov=cov, shape=shape, **kwargs)
-        return f
+        if not reparameterize:
+            return pm.MvStudentT(name, nu=self.nu, mu=mu, cov=cov, shape=shape, **kwargs)
+        chi2 = pm.ChiSquared(name + "_chi2_", self.nu)
+        v = pm.Normal(name + "_rotated_", mu=0.0, sigma=1.0, shape=shape, **kwargs)
+        return pm.Deterministic(
+            name, (tt.sqrt(self.nu) / chi2) * (mu + cholesky(cov).dot(v))
+        )
 
     def prior(self, name, X, reparameterize=True, **kwargs):
         R"""
@@ -438,9 +436,8 @@ class Marginal(Base):
         self.noise = noise
         if is_observed:
             return pm.MvNormal(name, mu=mu, cov=cov, observed=y, **kwargs)
-        else:
-            shape = infer_shape(X, kwargs.pop("shape", None))
-            return pm.MvNormal(name, mu=mu, cov=cov, shape=shape, **kwargs)
+        shape = infer_shape(X, kwargs.pop("shape", None))
+        return pm.MvNormal(name, mu=mu, cov=cov, shape=shape, **kwargs)
 
     def _get_given_vals(self, given):
         if given is None:
@@ -647,7 +644,7 @@ class MarginalSparse(Marginal):
         # new_gp will default to FITC approx
         new_gp = super().__add__(other)
         # make sure new gp has correct approx
-        if not self.approx == other.approx:
+        if self.approx != other.approx:
             raise TypeError("Cannot add GPs with different approximations")
         new_gp.approx = self.approx
         return new_gp
@@ -719,20 +716,18 @@ class MarginalSparse(Marginal):
             sigma = kwargs.get("sigma")
             if sigma is None:
                 raise ValueError("noise argument must be specified")
-            else:
-                self.sigma = sigma
-                warnings.warn(
-                    "The 'sigma' argument has been deprecated. Use 'noise' instead.",
-                    DeprecationWarning,
-                )
+            self.sigma = sigma
+            warnings.warn(
+                "The 'sigma' argument has been deprecated. Use 'noise' instead.",
+                DeprecationWarning,
+            )
         else:
             self.sigma = noise
         logp = functools.partial(self._build_marginal_likelihood_logp, X=X, Xu=Xu, sigma=noise)
         if is_observed:
             return pm.DensityDist(name, logp, observed=y, **kwargs)
-        else:
-            shape = infer_shape(X, kwargs.pop("shape", None))
-            return pm.DensityDist(name, logp, shape=shape, **kwargs)
+        shape = infer_shape(X, kwargs.pop("shape", None))
+        return pm.DensityDist(name, logp, shape=shape, **kwargs)
 
     def _build_conditional(self, Xnew, pred_noise, diag, X, Xu, y, sigma, cov_total, mean_total):
         sigma2 = tt.square(sigma)
@@ -883,8 +878,7 @@ class LatentKron(Base):
         chols = [cholesky(stabilize(cov(X))) for cov, X in zip(self.cov_funcs, Xs)]
         # remove reparameterization option
         v = pm.Normal(name + "_rotated_", mu=0.0, sigma=1.0, shape=self.N, **kwargs)
-        f = pm.Deterministic(name, mu + tt.flatten(kron_dot(chols, v)))
-        return f
+        return pm.Deterministic(name, mu + tt.flatten(kron_dot(chols, v)))
 
     def prior(self, name, Xs, **kwargs):
         """
@@ -1083,9 +1077,8 @@ class MarginalKron(Base):
         self.sigma = sigma
         if is_observed:
             return pm.KroneckerNormal(name, mu=mu, covs=covs, sigma=sigma, observed=y, **kwargs)
-        else:
-            shape = np.prod([len(X) for X in Xs])
-            return pm.KroneckerNormal(name, mu=mu, covs=covs, sigma=sigma, shape=shape, **kwargs)
+        shape = np.prod([len(X) for X in Xs])
+        return pm.KroneckerNormal(name, mu=mu, covs=covs, sigma=sigma, shape=shape, **kwargs)
 
     def _build_conditional(self, Xnew, pred_noise, diag):
         Xs, y, sigma = self.Xs, self.y, self.sigma

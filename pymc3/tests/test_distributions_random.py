@@ -102,7 +102,7 @@ def pymc3_random_discrete(
             e = np.atleast_1d(e).flatten()
             observed = dict(zip(*np.unique(o, return_counts=True)))
             expected = dict(zip(*np.unique(e, return_counts=True)))
-            for e in expected.keys():
+            for e in expected:
                 expected[e] = (observed.get(e, 0), expected[e])
             k = np.array([v for v in expected.values()])
             if np.all(k[:, 0] == k[:, 1]):
@@ -236,10 +236,7 @@ class BaseTestCases:
         @pytest.mark.parametrize("size", [None, 5, (4, 5)], ids=str)
         def test_scalar_parameter_shape(self, size):
             rv = self.get_random_variable(None)
-            if size is None:
-                expected = (1,)
-            else:
-                expected = np.atleast_1d(size).tolist()
+            expected = (1, ) if size is None else np.atleast_1d(size).tolist()
             actual = np.atleast_1d(self.sample_random_variable(rv, size)).shape
             assert tuple(expected) == actual
 
@@ -248,10 +245,7 @@ class BaseTestCases:
             shape = 10
             rv = self.get_random_variable(shape)
 
-            if size is None:
-                expected = []
-            else:
-                expected = np.atleast_1d(size).tolist()
+            expected = [] if size is None else np.atleast_1d(size).tolist()
             expected.append(shape)
             actual = np.atleast_1d(self.sample_random_variable(rv, size)).shape
             assert tuple(expected) == actual
@@ -259,10 +253,7 @@ class BaseTestCases:
         @pytest.mark.parametrize("size", [None, 5, (4, 5)], ids=str)
         def test_parameters_1d_shape(self, size):
             rv = self.get_random_variable(self.shape, with_vector_params=True)
-            if size is None:
-                expected = []
-            else:
-                expected = np.atleast_1d(size).tolist()
+            expected = [] if size is None else np.atleast_1d(size).tolist()
             expected.append(self.shape)
             actual = self.sample_random_variable(rv, size).shape
             assert tuple(expected) == actual
@@ -271,10 +262,7 @@ class BaseTestCases:
         def test_broadcast_shape(self, size):
             broadcast_shape = (2 * self.shape, self.shape)
             rv = self.get_random_variable(broadcast_shape, with_vector_params=True)
-            if size is None:
-                expected = []
-            else:
-                expected = np.atleast_1d(size).tolist()
+            expected = [] if size is None else np.atleast_1d(size).tolist()
             expected.extend(broadcast_shape)
             actual = np.atleast_1d(self.sample_random_variable(rv, size)).shape
             assert tuple(expected) == actual
@@ -866,9 +854,7 @@ class TestScalarParameterSamples(SeededTest):
             return ref_rand(size, mu, covs, sigma)
 
         def ref_rand_evd(size, mu, evds, sigma):
-            covs = []
-            for eigs, Q in evds:
-                covs.append(np.dot(Q, np.dot(np.diag(eigs), Q.T)))
+            covs = [np.dot(Q, np.dot(np.diag(eigs), Q.T)) for eigs, Q in evds]
             return ref_rand(size, mu, covs, sigma)
 
         sizes = [2, 3]
@@ -1624,8 +1610,8 @@ class TestMvNormal(SeededTest):
 
     def test_issue_3758(self):
         np.random.seed(42)
-        ndim = 50
         with pm.Model() as model:
+            ndim = 50
             a = pm.Normal("a", sigma=100, shape=ndim)
             b = pm.Normal("b", mu=a, sigma=1, shape=ndim)
             c = pm.MvNormal("c", mu=a, chol=np.linalg.cholesky(np.eye(ndim)), shape=ndim)

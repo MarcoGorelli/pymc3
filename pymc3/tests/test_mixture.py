@@ -48,9 +48,7 @@ def generate_normal_mixture_data(w, mu, sd, size=1000):
     sd_ = np.array([sd[..., comp] for comp in component.ravel()])
     mu_ = np.reshape(mu_, out_size)
     sd_ = np.reshape(sd_, out_size)
-    x = np.random.normal(mu_, sd_, size=out_size)
-
-    return x
+    return np.random.normal(mu_, sd_, size=out_size)
 
 
 def generate_poisson_mixture_data(w, mu, size=1000):
@@ -59,9 +57,7 @@ def generate_poisson_mixture_data(w, mu, size=1000):
     out_size = to_tuple(size) + mu.shape[:-1]
     mu_ = np.array([mu[..., comp] for comp in component.ravel()])
     mu_ = np.reshape(mu_, out_size)
-    x = np.random.poisson(mu_, size=out_size)
-
-    return x
+    return np.random.poisson(mu_, size=out_size)
 
 
 class TestMixture(SeededTest):
@@ -165,13 +161,10 @@ class TestMixture(SeededTest):
             mus = Normal("mus", shape=comp_shape)
             taus = Gamma("taus", alpha=1, beta=1, shape=comp_shape)
             ws = Dirichlet("ws", np.ones(ncomp), shape=(ncomp,))
-            if len(nd) > 1:
-                if nd[-1] != ncomp:
-                    with pytest.raises(ValueError):
-                        NormalMixture("m", w=ws, mu=mus, tau=taus, shape=nd)
-                    mixture2 = None
-                else:
-                    mixture2 = NormalMixture("m", w=ws, mu=mus, tau=taus, shape=nd)
+            if len(nd) > 1 and nd[-1] != ncomp:
+                with pytest.raises(ValueError):
+                    NormalMixture("m", w=ws, mu=mus, tau=taus, shape=nd)
+                mixture2 = None
             else:
                 mixture2 = NormalMixture("m", w=ws, mu=mus, tau=taus, shape=nd)
             observed_fails = False
@@ -467,10 +460,7 @@ class TestMixtureVsLatent(SeededTest):
         assert p_marginal >= 0.05 and p_correlation >= 0.05
 
     def logp_matches(self, mixture, latent_mix, z, npop, model):
-        if theano.config.floatX == "float32":
-            rtol = 1e-4
-        else:
-            rtol = 1e-7
+        rtol = 1e-4 if theano.config.floatX == "float32" else 1e-7
         test_point = model.test_point
         test_point["latent_m"] = test_point["m"]
         mix_logp = mixture.logp(test_point)
@@ -520,11 +510,7 @@ class TestMixtureSameFamily(SeededTest):
         assert prior["mixture"].shape == (self.n_samples, *batch_shape, 3)
         assert mixture.random(size=self.size).shape == (self.size, *batch_shape, 3)
 
-        if theano.config.floatX == "float32":
-            rtol = 1e-4
-        else:
-            rtol = 1e-7
-
+        rtol = 1e-4 if theano.config.floatX == "float32" else 1e-7
         comp_logp = comp_dists.logp(model.test_point["mixture"].reshape(*batch_shape, 1, 3))
         log_sum_exp = logsumexp(
             comp_logp.eval() + np.log(w)[..., None], axis=mixture_axis, keepdims=True
@@ -555,11 +541,7 @@ class TestMixtureSameFamily(SeededTest):
         assert prior["mixture"].shape == (self.n_samples, 3)
         assert mixture.random(size=self.size).shape == (self.size, 3)
 
-        if theano.config.floatX == "float32":
-            rtol = 1e-4
-        else:
-            rtol = 1e-7
-
+        rtol = 1e-4 if theano.config.floatX == "float32" else 1e-7
         comp_logp = comp_dists.logp(model.test_point["mixture"].reshape(1, 3))
         log_sum_exp = logsumexp(
             comp_logp.eval() + np.log(w)[..., None], axis=0, keepdims=True

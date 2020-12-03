@@ -79,8 +79,6 @@ class Inference:
                 "does not return loss. Ignoring `score` argument" % self.objective.op
             )
             score = False
-        else:
-            pass
         return score
 
     def run_profiling(self, n=1000, score=None, **kwargs):
@@ -801,10 +799,7 @@ def fit(
     -------
     :class:`Approximation`
     """
-    if inf_kwargs is None:
-        inf_kwargs = dict()
-    else:
-        inf_kwargs = inf_kwargs.copy()
+    inf_kwargs = dict() if inf_kwargs is None else inf_kwargs.copy()
     if local_rv is not None:
         inf_kwargs["local_rv"] = local_rv
     if random_seed is not None:
