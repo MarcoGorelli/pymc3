@@ -49,13 +49,6 @@ repos:
       language: python
       name: Check no tests are ignored
       pass_filenames: false
-    - id: rel-to-abs
-      entry: python scripts/relative-to-abs.py
-      language: python
-      files: ^pymc3/
-      types:
-        - python
-      name: rel
     - id: no-relative-imports
       name: Check there are no relative imports
       entry: from \.[\.\w]* import

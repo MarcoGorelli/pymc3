@@ -22,7 +22,7 @@ from pymc3.step_methods import arraystep
 from pymc3.step_methods.hmc import integration
 from pymc3.theanof import inputvars, floatX
 from pymc3.tuning import guess_scaling
-from pymc3.step_methods.quadpotential import quad_potential, QuadPotentialDiagAdapt
+from pymc3.step_methods.hmc.quadpotential import quad_potential, QuadPotentialDiagAdapt
 from pymc3.step_methods import step_sizes
 from pymc3.backends.report import SamplerWarning, WarningType
 from pymc3.exceptions import SamplingError
