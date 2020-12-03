@@ -15,7 +15,7 @@
 import numpy as np
 import numpy.testing as npt
 
-from . import models
+from pymc3.tests import models
 from pymc3.step_methods.hmc.base_hmc import BaseHMC
 import pymc3
 import logging

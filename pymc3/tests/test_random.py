@@ -21,7 +21,7 @@ import theano.tensor as tt
 import theano
 
 from pymc3.distributions.distribution import _draw_value, draw_values
-from .helpers import SeededTest
+from pymc3.tests.helpers import SeededTest
 
 
 def test_draw_value():

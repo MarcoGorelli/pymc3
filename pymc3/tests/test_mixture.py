@@ -16,7 +16,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from .helpers import SeededTest
+from pymc3.tests.helpers import SeededTest
 import pymc3 as pm
 from pymc3 import (
     Dirichlet,

@@ -18,9 +18,9 @@ import theano
 import theano.tensor as tt
 import warnings
 
-from ..math import logsumexp
-from .dist_math import bound, random_choice
-from .distribution import (
+from pymc3.math import logsumexp
+from pymc3.distributions.dist_math import bound, random_choice
+from pymc3.distributions.distribution import (
     Discrete,
     Distribution,
     draw_values,
@@ -28,13 +28,13 @@ from .distribution import (
     _DrawValuesContext,
     _DrawValuesContextBlocker,
 )
-from .shape_utils import (
+from pymc3.distributions.shape_utils import (
     to_tuple,
     broadcast_distribution_samples,
     get_broadcastable_dist_samples,
 )
-from .continuous import get_tau_sigma, Normal
-from ..theanof import _conversion_map, take_along_axis
+from pymc3.distributions.continuous import get_tau_sigma, Normal
+from pymc3.theanof import _conversion_map, take_along_axis
 
 __all__ = ["Mixture", "NormalMixture", "MixtureSameFamily"]
 

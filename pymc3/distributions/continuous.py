@@ -23,8 +23,8 @@ import numpy as np
 import theano
 import theano.tensor as tt
 
-from . import transforms
-from .dist_math import (
+from pymc3.distributions import transforms
+from pymc3.distributions.dist_math import (
     alltrue_elemwise,
     betaln,
     bound,
@@ -39,9 +39,9 @@ from .dist_math import (
     zvalue,
     clipped_beta_rvs,
 )
-from .distribution import Continuous, draw_values, generate_samples
-from .special import log_i0
-from ..math import invlogit, logit, logdiffexp
+from pymc3.distributions.distribution import Continuous, draw_values, generate_samples
+from pymc3.distributions.special import log_i0
+from pymc3.math import invlogit, logit, logdiffexp
 
 from pymc3.theanof import floatX
 from scipy import stats

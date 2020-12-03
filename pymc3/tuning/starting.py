@@ -23,12 +23,12 @@ from numpy import isfinite, nan_to_num
 from fastprogress.fastprogress import progress_bar
 from fastprogress.fastprogress import ProgressBar
 import pymc3 as pm
-from ..vartypes import discrete_types, typefilter
-from ..model import modelcontext, Point
-from ..theanof import inputvars
+from pymc3.vartypes import discrete_types, typefilter
+from pymc3.model import modelcontext, Point
+from pymc3.theanof import inputvars
 import theano.gradient as tg
-from ..blocking import DictToArrayBijection, ArrayOrdering
-from ..util import check_start_vals, update_start_vals, get_default_varnames, get_var_name
+from pymc3.blocking import DictToArrayBijection, ArrayOrdering
+from pymc3.util import check_start_vals, update_start_vals, get_default_varnames, get_var_name
 
 import warnings
 from inspect import getargspec

@@ -19,7 +19,7 @@ import numpy.testing as npt
 from scipy import stats
 import theano.tensor as tt
 
-from .helpers import SeededTest
+from pymc3.tests.helpers import SeededTest
 
 
 class KnownMean:

@@ -21,8 +21,8 @@ from theano.gof.graph import stack_search
 from theano.compile import SharedVariable
 from theano.tensor import Tensor
 
-from .util import get_default_varnames, get_var_name
-from .model import ObservedRV
+from pymc3.util import get_default_varnames, get_var_name
+from pymc3.model import ObservedRV
 import pymc3 as pm
 
 

@@ -12,8 +12,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from ..model import Model
-from ..distributions import DiscreteUniform, Continuous, Categorical
+from pymc3.model import Model
+from pymc3.distributions import DiscreteUniform, Continuous, Categorical
 
 import numpy as np
 import pytest

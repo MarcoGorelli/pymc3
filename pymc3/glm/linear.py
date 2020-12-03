@@ -14,10 +14,10 @@
 
 import theano.tensor as tt
 import numpy as np
-from ..distributions import Normal, Flat
-from . import families
-from ..model import Model, Deterministic
-from .utils import any_to_tensor_and_labels
+from pymc3.distributions import Normal, Flat
+from pymc3.glm import families
+from pymc3.model import Model, Deterministic
+from pymc3.glm.utils import any_to_tensor_and_labels
 
 
 __all__ = ["LinearComponent", "GLM"]

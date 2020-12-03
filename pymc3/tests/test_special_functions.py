@@ -19,7 +19,7 @@ import pymc3.distributions.special as ps
 import scipy.special as ss
 import numpy as np
 
-from .checks import close_to
+from pymc3.tests.checks import close_to
 
 
 def test_functions():

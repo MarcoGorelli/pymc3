@@ -13,8 +13,8 @@
 #   limitations under the License.
 
 import pymc3 as pm
-from ..theanof import floatX
-from .helpers import SeededTest
+from pymc3.theanof import floatX
+from pymc3.tests.helpers import SeededTest
 import numpy as np
 import pandas as pd
 import pytest

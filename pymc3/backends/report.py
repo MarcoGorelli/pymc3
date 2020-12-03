@@ -17,7 +17,7 @@ import enum
 from typing import Any, Optional
 import dataclasses
 
-from ..util import is_transformed_name, get_untransformed_name
+from pymc3.util import is_transformed_name, get_untransformed_name
 
 import arviz
 

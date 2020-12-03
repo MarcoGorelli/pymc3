@@ -25,24 +25,24 @@ import theano.tensor as tt
 from xarray import Dataset
 from arviz import InferenceData
 
-from ..backends.base import MultiTrace
-from .distribution import (
+from pymc3.backends.base import MultiTrace
+from pymc3.distributions.distribution import (
     _DrawValuesContext,
     _DrawValuesContextBlocker,
     is_fast_drawable,
     _compile_theano_function,
     vectorized_ppc,
 )
-from ..model import (
+from pymc3.model import (
     Model,
     get_named_nodes_and_relations,
     ObservedRV,
     MultiObservedRV,
     modelcontext,
 )
-from ..exceptions import IncorrectArgumentsError
-from ..vartypes import theano_constant
-from ..util import dataset_to_point_dict, chains_and_samples, get_var_name
+from pymc3.exceptions import IncorrectArgumentsError
+from pymc3.vartypes import theano_constant
+from pymc3.util import dataset_to_point_dict, chains_and_samples, get_var_name
 
 # Failing tests:
 #    test_mixture_random_shape::test_mixture_random_shape

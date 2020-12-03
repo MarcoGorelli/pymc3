@@ -20,10 +20,10 @@ from typing import Union, List, Optional, Type
 import theano
 import theano.tensor as tt
 
-from .arraystep import ArrayStepShared, metrop_select, Competence
-from .compound import CompoundStep
-from .metropolis import Proposal, Metropolis, DEMetropolisZ, delta_logp
-from ..model import Model
+from pymc3.step_methods.arraystep import ArrayStepShared, metrop_select, Competence
+from pymc3.step_methods.compound import CompoundStep
+from pymc3.step_methods.metropolis import Proposal, Metropolis, DEMetropolisZ, delta_logp
+from pymc3.model import Model
 import pymc3 as pm
 
 __all__ = [

@@ -14,7 +14,7 @@
 
 from theano import tensor as tt
 from pymc3.theanof import change_flags
-from . import opvi
+from pymc3.variational import opvi
 from pymc3.variational.opvi import Operator, ObjectiveFunction
 from pymc3.variational.stein import Stein
 import pymc3 as pm

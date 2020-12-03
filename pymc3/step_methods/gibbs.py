@@ -17,15 +17,15 @@ Created on May 12, 2012
 
 @author: john
 """
-from .arraystep import ArrayStep, Competence
-from ..distributions.discrete import Categorical
+from pymc3.step_methods.arraystep import ArrayStep, Competence
+from pymc3.distributions.discrete import Categorical
 from numpy import array, max, exp, cumsum, nested_iters, empty, searchsorted, ones, arange
 from numpy.random import uniform
 from warnings import warn
 
 from theano.gof.graph import inputs
 from theano.tensor import add
-from ..model import modelcontext
+from pymc3.model import modelcontext
 
 __all__ = ["ElemwiseCategorical"]
 

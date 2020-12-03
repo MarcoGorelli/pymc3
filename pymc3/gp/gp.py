@@ -31,7 +31,7 @@ from pymc3.gp.util import (
 )
 from pymc3.distributions import draw_values
 from theano.tensor.nlinalg import eigh
-from ..math import cartesian, kron_dot, kron_diag, kron_solve_lower, kron_solve_upper
+from pymc3.math import cartesian, kron_dot, kron_diag, kron_solve_lower, kron_solve_upper
 
 __all__ = ["Latent", "Marginal", "TP", "MarginalSparse", "LatentKron", "MarginalKron"]
 

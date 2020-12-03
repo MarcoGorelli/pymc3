@@ -15,7 +15,7 @@
 import numpy as np
 from numpy.testing import assert_equal
 
-from .helpers import SeededTest
+from pymc3.tests.helpers import SeededTest
 import pymc3
 from pymc3 import Model, Uniform, Normal, find_MAP, Slice, sample
 from pymc3 import families, GLM, LinearComponent

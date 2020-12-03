@@ -12,8 +12,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from ..ode import DifferentialEquation
-from ..ode.utils import augment_system
+from pymc3.ode import DifferentialEquation
+from pymc3.ode.utils import augment_system
 import numpy as np
 from scipy.integrate import odeint
 from scipy.stats import norm

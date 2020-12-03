@@ -17,8 +17,8 @@ import numpy.random as nr
 import theano
 import scipy.linalg
 
-from ..distributions import draw_values
-from .arraystep import (
+from pymc3.distributions import draw_values
+from pymc3.step_methods.arraystep import (
     ArrayStepShared,
     PopulationArrayStepShared,
     ArrayStep,

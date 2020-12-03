@@ -42,8 +42,8 @@ from pymc3.variational.inference import ADVI, FullRankADVI, SVGD, NFVI, ASVGD, f
 from pymc3.variational import flows
 from pymc3.variational.opvi import Approximation, Group
 from pymc3.variational import opvi
-from . import models
-from .helpers import not_raises
+from pymc3.tests import models
+from pymc3.tests.helpers import not_raises
 
 pytestmark = pytest.mark.usefixtures("strict_float32", "seeded_test")
 

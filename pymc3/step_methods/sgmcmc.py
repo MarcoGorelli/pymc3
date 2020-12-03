@@ -15,10 +15,10 @@
 from collections import OrderedDict
 import warnings
 
-from .arraystep import ArrayStepShared
-from ..model import modelcontext, inputvars
+from pymc3.step_methods.arraystep import ArrayStepShared
+from pymc3.model import modelcontext, inputvars
 import theano.tensor as tt
-from ..theanof import tt_rng, make_shared_replacements
+from pymc3.theanof import tt_rng, make_shared_replacements
 import theano
 
 __all__ = []

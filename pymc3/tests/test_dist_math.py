@@ -20,9 +20,9 @@ import pymc3 as pm
 from scipy import stats, interpolate
 import pytest
 
-from ..theanof import floatX
-from ..distributions import Discrete
-from ..distributions.dist_math import (
+from pymc3.theanof import floatX
+from pymc3.distributions import Discrete
+from pymc3.distributions.dist_math import (
     bound,
     factln,
     alltrue_scalar,
@@ -31,7 +31,7 @@ from ..distributions.dist_math import (
     i0e,
     clipped_beta_rvs,
 )
-from .helpers import verify_grad
+from pymc3.tests.helpers import verify_grad
 
 
 def test_bound():

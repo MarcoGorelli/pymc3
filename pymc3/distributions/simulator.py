@@ -14,7 +14,7 @@
 
 import logging
 import numpy as np
-from .distribution import NoDistribution, draw_values
+from pymc3.distributions.distribution import NoDistribution, draw_values
 from scipy.spatial import cKDTree
 
 __all__ = ["Simulator"]

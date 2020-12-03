@@ -15,11 +15,11 @@
 import itertools
 import sys
 
-from .helpers import SeededTest, select_by_precision
-from ..vartypes import continuous_types
-from ..model import Model, Point, Deterministic
-from ..blocking import DictToVarBijection
-from ..distributions import (
+from pymc3.tests.helpers import SeededTest, select_by_precision
+from pymc3.vartypes import continuous_types
+from pymc3.model import Model, Point, Deterministic
+from pymc3.blocking import DictToVarBijection
+from pymc3.distributions import (
     DensityDist,
     Categorical,
     Multinomial,
@@ -77,7 +77,7 @@ from ..distributions import (
     Moyal,
 )
 
-from ..distributions import continuous
+from pymc3.distributions import continuous
 from pymc3.theanof import floatX
 import pymc3 as pm
 from numpy import array, inf, log, exp
@@ -92,7 +92,7 @@ import scipy.stats
 from scipy.special import logit
 import theano
 import theano.tensor as tt
-from ..math import kronecker
+from pymc3.math import kronecker
 
 
 def get_lkj_cases():

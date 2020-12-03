@@ -19,10 +19,10 @@ import theano.tensor as tt
 from theano import scan
 import numpy as np
 
-from .continuous import get_tau_sigma, Normal, Flat
-from .shape_utils import to_tuple
-from . import multivariate
-from . import distribution
+from pymc3.distributions.continuous import get_tau_sigma, Normal, Flat
+from pymc3.distributions.shape_utils import to_tuple
+from pymc3.distributions import multivariate
+from pymc3.distributions import distribution
 
 
 __all__ = [

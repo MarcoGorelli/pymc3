@@ -13,8 +13,8 @@
 #   limitations under the License.
 
 # commonly used
-from . import updates
-from .updates import (
+from pymc3.variational import updates
+from pymc3.variational.updates import (
     sgd,
     apply_momentum,
     momentum,
@@ -30,17 +30,33 @@ from .updates import (
     total_norm_constraint,
 )
 
-from . import inference
-from .inference import ADVI, FullRankADVI, SVGD, ASVGD, NFVI, Inference, KLqp, ImplicitGradient, fit
+from pymc3.variational import inference
+from pymc3.variational.inference import (
+    ADVI,
+    FullRankADVI,
+    SVGD,
+    ASVGD,
+    NFVI,
+    Inference,
+    KLqp,
+    ImplicitGradient,
+    fit,
+)
 
-from . import approximations
-from .approximations import MeanField, FullRank, Empirical, NormalizingFlow, sample_approx
-from . import opvi
-from .opvi import Group, Approximation
+from pymc3.variational import approximations
+from pymc3.variational.approximations import (
+    MeanField,
+    FullRank,
+    Empirical,
+    NormalizingFlow,
+    sample_approx,
+)
+from pymc3.variational import opvi
+from pymc3.variational.opvi import Group, Approximation
 
 # special
-from .stein import Stein
-from . import flows
-from . import operators
-from . import test_functions
-from . import callbacks
+from pymc3.variational.stein import Stein
+from pymc3.variational import flows
+from pymc3.variational import operators
+from pymc3.variational import test_functions
+from pymc3.variational import callbacks

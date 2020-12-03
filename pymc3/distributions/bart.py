@@ -13,8 +13,8 @@
 #   limitations under the License.
 
 import numpy as np
-from .distribution import NoDistribution
-from .tree import Tree, SplitNode, LeafNode
+from pymc3.distributions.distribution import NoDistribution
+from pymc3.distributions.tree import Tree, SplitNode, LeafNode
 
 __all__ = ["BART"]
 

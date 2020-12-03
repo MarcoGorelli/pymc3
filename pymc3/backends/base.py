@@ -25,9 +25,9 @@ import numpy as np
 import warnings
 import theano.tensor as tt
 
-from ..model import modelcontext
-from .report import SamplerReport, merge_reports
-from ..util import get_var_name
+from pymc3.model import modelcontext
+from pymc3.backends.report import SamplerReport, merge_reports
+from pymc3.util import get_var_name
 
 logger = logging.getLogger("pymc3")
 

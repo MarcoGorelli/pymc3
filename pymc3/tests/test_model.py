@@ -25,7 +25,7 @@ import pymc3 as pm
 from pymc3.distributions import HalfCauchy, Normal, transforms
 from pymc3 import Potential, Deterministic
 from pymc3.model import ValueGradFunction
-from .helpers import select_by_precision
+from pymc3.tests.helpers import select_by_precision
 
 
 class NewModel(pm.Model):

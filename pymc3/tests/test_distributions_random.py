@@ -30,8 +30,8 @@ from pymc3.distributions.distribution import (
     _DrawValuesContextBlocker,
     to_tuple,
 )
-from .helpers import SeededTest
-from .test_distributions import (
+from pymc3.tests.helpers import SeededTest
+from pymc3.tests.test_distributions import (
     build_model,
     Domain,
     product,

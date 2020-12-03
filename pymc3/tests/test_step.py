@@ -16,8 +16,8 @@ import shutil
 import tempfile
 import sys
 
-from .checks import close_to
-from .models import (
+from pymc3.tests.checks import close_to
+from pymc3.tests.models import (
     simple_categorical,
     mv_simple,
     mv_simple_coarse,
@@ -59,7 +59,7 @@ import numpy.testing as npt
 import pytest
 import theano
 import theano.tensor as tt
-from .helpers import select_by_precision
+from pymc3.tests.helpers import select_by_precision
 from math import isclose
 
 

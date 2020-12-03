@@ -28,9 +28,9 @@ from theano.tensor.slinalg import Cholesky
 from theano.compile.builders import OpFromGraph
 from theano.scan import until
 from theano import scan
-from .shape_utils import to_tuple
+from pymc3.distributions.shape_utils import to_tuple
 
-from .special import gammaln
+from pymc3.distributions.special import gammaln
 from pymc3.theanof import floatX
 
 

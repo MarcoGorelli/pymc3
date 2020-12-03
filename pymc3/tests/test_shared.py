@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 import pymc3 as pm
-from .helpers import SeededTest
+from pymc3.tests.helpers import SeededTest
 import numpy as np
 import theano
 

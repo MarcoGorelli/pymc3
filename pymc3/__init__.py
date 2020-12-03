@@ -38,12 +38,12 @@ def __set_compiler_flags():
 
 __set_compiler_flags()
 
-from .blocking import *
-from .distributions import *
-from .distributions import transforms
-from .glm import *
-from . import gp
-from .math import (
+from pymc3.blocking import *
+from pymc3.distributions import *
+from pymc3.distributions import transforms
+from pymc3.glm import *
+from pymc3 import gp
+from pymc3.math import (
     logaddexp,
     logsumexp,
     logit,
@@ -52,24 +52,24 @@ from .math import (
     probit,
     invprobit,
 )
-from .model import *
-from .model_graph import model_to_graphviz
-from . import ode
-from .stats import *
-from .sampling import *
-from .step_methods import *
-from .smc import *
-from .theanof import *
-from .tuning import *
-from .variational import *
-from .vartypes import *
-from .exceptions import *
-from . import sampling
+from pymc3.model import *
+from pymc3.model_graph import model_to_graphviz
+from pymc3 import ode
+from pymc3.stats import *
+from pymc3.sampling import *
+from pymc3.step_methods import *
+from pymc3.smc import *
+from pymc3.theanof import *
+from pymc3.tuning import *
+from pymc3.variational import *
+from pymc3.vartypes import *
+from pymc3.exceptions import *
+from pymc3 import sampling
 
-from .backends.tracetab import *
-from .backends import save_trace, load_trace
+from pymc3.backends.tracetab import *
+from pymc3.backends import save_trace, load_trace
 
-from .plots import *
-from .tests import test
+from pymc3.plots import *
+from pymc3.tests import test
 
-from .data import *
+from pymc3.data import *

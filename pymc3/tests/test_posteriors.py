@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 import pytest
-from . import sampler_fixtures as sf
+from pymc3.tests import sampler_fixtures as sf
 import theano
 
 

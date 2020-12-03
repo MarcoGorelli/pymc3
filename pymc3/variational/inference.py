@@ -28,7 +28,7 @@ from pymc3.variational.approximations import (
     NormalizingFlow,
 )
 from pymc3.variational.operators import KL, KSD
-from . import opvi
+from pymc3.variational import opvi
 
 logger = logging.getLogger(__name__)
 

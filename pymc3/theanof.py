@@ -20,9 +20,9 @@ from theano.gof import Op
 from theano.gof.graph import inputs
 from theano.sandbox.rng_mrg import MRG_RandomStreams
 
-from .blocking import ArrayOrdering
-from .data import GeneratorAdapter
-from .vartypes import typefilter, continuous_types, int_types
+from pymc3.blocking import ArrayOrdering
+from pymc3.data import GeneratorAdapter
+from pymc3.vartypes import typefilter, continuous_types, int_types
 
 __all__ = [
     "gradient",

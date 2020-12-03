@@ -12,12 +12,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from .checks import close_to
+from pymc3.tests.checks import close_to
 import numpy as np
 from pymc3.tuning import starting
 from pymc3 import Model, Uniform, Normal, Beta, Binomial, find_MAP, Point
-from .models import simple_model, non_normal, simple_arbitrary_det
-from .helpers import select_by_precision
+from pymc3.tests.models import simple_model, non_normal, simple_arbitrary_det
+from pymc3.tests.helpers import select_by_precision
 
 from pytest import raises
 

@@ -30,7 +30,7 @@ from pymc3.math import (
     kron_dot,
     kron_solve_lower,
 )
-from .helpers import SeededTest, verify_grad
+from pymc3.tests.helpers import SeededTest, verify_grad
 import pytest
 from pymc3.theanof import floatX
 

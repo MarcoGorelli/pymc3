@@ -19,8 +19,8 @@ import pytest
 
 import theano
 import theano.tensor as tt
-from .helpers import SeededTest
-from .test_distributions import (
+from pymc3.tests.helpers import SeededTest
+from pymc3.tests.test_distributions import (
     Simplex,
     Rplusbig,
     Rminusbig,
@@ -32,8 +32,8 @@ from .test_distributions import (
     SortedVector,
     UnitSortedVector,
 )
-from .checks import close_to, close_to_logical
-from ..theanof import jacobian
+from pymc3.tests.checks import close_to, close_to_logical
+from pymc3.theanof import jacobian
 
 
 # some transforms (stick breaking) require additon of small slack in order to be numerically

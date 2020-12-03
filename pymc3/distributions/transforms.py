@@ -15,11 +15,11 @@
 import warnings
 import theano.tensor as tt
 
-from ..model import FreeRV
-from ..theanof import gradient, floatX
-from . import distribution
-from ..math import logit, invlogit, logsumexp
-from .distribution import draw_values
+from pymc3.model import FreeRV
+from pymc3.theanof import gradient, floatX
+from pymc3.distributions import distribution
+from pymc3.math import logit, invlogit, logsumexp
+from pymc3.distributions.distribution import draw_values
 import numpy as np
 from scipy.special import logit as nplogit
 

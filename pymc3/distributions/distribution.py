@@ -24,12 +24,19 @@ if TYPE_CHECKING:
 import numpy as np
 import theano.tensor as tt
 from theano import function
-from ..util import get_repr_for_variable, get_var_name
+from pymc3.util import get_repr_for_variable, get_var_name
 import theano
-from ..memoize import memoize
-from ..model import Model, build_named_node_tree, FreeRV, ObservedRV, MultiObservedRV, ContextMeta
-from ..vartypes import string_types, theano_constant
-from .shape_utils import (
+from pymc3.memoize import memoize
+from pymc3.model import (
+    Model,
+    build_named_node_tree,
+    FreeRV,
+    ObservedRV,
+    MultiObservedRV,
+    ContextMeta,
+)
+from pymc3.vartypes import string_types, theano_constant
+from pymc3.distributions.shape_utils import (
     to_tuple,
     get_broadcastable_dist_samples,
     broadcast_dist_samples_shape,

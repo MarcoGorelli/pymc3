@@ -15,7 +15,7 @@
 import pymc3 as pm
 import numpy as np
 import theano.tensor as tt
-from .helpers import SeededTest
+from pymc3.tests.helpers import SeededTest
 
 
 class TestSMC(SeededTest):

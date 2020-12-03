@@ -32,12 +32,12 @@ import theano.gradient as tg
 from theano.tensor import Tensor
 import xarray
 
-from .backends.base import BaseTrace, MultiTrace
-from .backends.ndarray import NDArray
-from .distributions.distribution import draw_values
-from .distributions.posterior_predictive import fast_sample_posterior_predictive
-from .model import modelcontext, Point, all_continuous, Model
-from .step_methods import (
+from pymc3.backends.base import BaseTrace, MultiTrace
+from pymc3.backends.ndarray import NDArray
+from pymc3.distributions.distribution import draw_values
+from pymc3.distributions.posterior_predictive import fast_sample_posterior_predictive
+from pymc3.model import modelcontext, Point, all_continuous, Model
+from pymc3.step_methods import (
     NUTS,
     HamiltonianMC,
     Metropolis,
@@ -50,7 +50,7 @@ from .step_methods import (
     arraystep,
     PGBART,
 )
-from .util import (
+from pymc3.util import (
     check_start_vals,
     update_start_vals,
     get_untransformed_name,
@@ -59,9 +59,9 @@ from .util import (
     dataset_to_point_dict,
     chains_and_samples,
 )
-from .vartypes import discrete_types
-from .exceptions import IncorrectArgumentsError
-from .parallel_sampling import _cpu_count, Draw
+from pymc3.vartypes import discrete_types
+from pymc3.exceptions import IncorrectArgumentsError
+from pymc3.parallel_sampling import _cpu_count, Draw
 from pymc3.step_methods.hmc import quadpotential
 import pymc3 as pm
 from fastprogress.fastprogress import progress_bar

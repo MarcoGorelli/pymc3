@@ -18,8 +18,8 @@ import scipy
 import theano
 import theano.tensor as tt
 from theano.gof.op import get_test_value
-from ..ode import utils
-from ..exceptions import ShapeError, DtypeError
+from pymc3.ode import utils
+from pymc3.exceptions import ShapeError, DtypeError
 
 _log = logging.getLogger("pymc3")
 floatX = theano.config.floatX
