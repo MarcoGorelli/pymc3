@@ -67,8 +67,8 @@ class TestSample(SeededTest):
         assert (draws[0] == draws[1]).all()
 
     def test_sample(self):
-        test_cores = [1]
         with self.model:
+            test_cores = [1]
             for cores in test_cores:
                 for steps in [1, 10, 300]:
                     pm.sample(
@@ -159,7 +159,6 @@ class TestSample(SeededTest):
             assert trace.report.n_tune == 50
             assert trace.report.n_draws == 100
             assert isinstance(trace.report.t_sampling, float)
-        pass
 
     def test_trace_report_bart(self):
         X = np.random.normal(0, 1, size=(3, 250)).T
@@ -213,7 +212,6 @@ class TestSample(SeededTest):
             monkeypatch.setattr("pymc3.__version__", "3.10")
             with pytest.warns(FutureWarning, match="pass return_inferencedata"):
                 result = pm.sample(**kwargs)
-        pass
 
     @pytest.mark.parametrize("cores", [1, 2])
     def test_sampler_stat_tune(self, cores):
@@ -223,7 +221,6 @@ class TestSample(SeededTest):
             ).get_sampler_stats("tune", chains=1)
             assert list(tune_stat).count(True) == 5
             assert list(tune_stat).count(False) == 7
-        pass
 
     @pytest.mark.parametrize(
         "start, error",
@@ -243,10 +240,10 @@ class TestSample(SeededTest):
         pm.sampling._check_start_shape(self.model, start)
 
     def test_sample_callback(self):
-        callback = mock.Mock()
-        test_cores = [1, 2]
-        test_chains = [1, 2]
         with self.model:
+            callback = mock.Mock()
+            test_cores = [1, 2]
+            test_chains = [1, 2]
             for cores in test_cores:
                 for chain in test_chains:
                     pm.sample(
@@ -607,7 +604,6 @@ class TestSamplePPC(SeededTest):
     def test_deterministic_of_observed(self):
         meas_in_1 = pm.theanof.floatX(2 + 4 * np.random.randn(10))
         meas_in_2 = pm.theanof.floatX(5 + 4 * np.random.randn(10))
-        nchains = 2
         with pm.Model() as model:
             mu_in_1 = pm.Normal("mu_in_1", 0, 1)
             sigma_in_1 = pm.HalfNormal("sd_in_1", 1)
@@ -619,6 +615,7 @@ class TestSamplePPC(SeededTest):
             out_diff = in_1 + in_2
             pm.Deterministic("out", out_diff)
 
+            nchains = 2
             trace = pm.sample(100, chains=nchains)
             np.random.seed(0)
             with pytest.warns(DeprecationWarning):
